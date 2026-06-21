@@ -62,6 +62,16 @@
   .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:9px 18px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;}
   .toast.show{opacity:1;}
   .stage-banner{background:var(--accent-soft);border:1px solid var(--accent);color:#7a2e15;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:18px;}
+  .block{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden;}
+  .block-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:var(--panel-2);}
+  .block-title{font-weight:700;font-size:15px;}
+  .block-body{padding:14px;border-top:1px solid var(--line);}
+  .layer-item{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+  .layer-add{width:max-content;padding:6px 12px;font-size:13px;margin-top:2px;}
+  .rep-item{border:1px dashed var(--line);border-radius:7px;padding:12px;margin-bottom:10px;}
+  .rep-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .rep-item-head .tag{font-size:12px;font-weight:700;color:#fff;background:var(--ink-dim);padding:2px 10px;border-radius:20px;}
+  .extra-fields{margin-top:6px;}
 </style>
 </head>
 <body>
@@ -90,31 +100,46 @@
     { name:'Проект', fields:[
       {label:'Адрес объекта', type:'text'},
       {label:'Название проекта', type:'text'},
-      {label:'Расположение', type:'select', source:'В помещении; На улице; Смешанное'},
       {label:'Номер договора', type:'text'},
       {label:'Контактное лицо заказчика', type:'text'},
       {label:'Рисунки проекта', type:'file'},
     ]},
-    { name:'Конструкции здания', fields:[
-      {group:'Полы', label:'Основа', type:'select', source:'список: основа'},
-      {group:'Полы', label:'Толщина основы', type:'text', note:'мм'},
-      {group:'Полы', label:'Отделка', type:'select', source:'список: отделка'},
-      {group:'Полы', label:'Толщина отделки', type:'text', note:'мм'},
-      {group:'Стены', label:'Основа', type:'select', source:'список: основа'},
-      {group:'Стены', label:'Толщина основы', type:'text', note:'мм'},
-      {group:'Стены', label:'Отделка', type:'select', source:'список: отделка'},
-      {group:'Стены', label:'Толщина отделки', type:'text', note:'мм'},
-      {group:'Колонны', label:'Основа', type:'select', source:'список: основа'},
-      {group:'Колонны', label:'Толщина основы', type:'text', note:'мм'},
-      {group:'Колонны', label:'Отделка', type:'select', source:'список: отделка'},
-      {group:'Колонны', label:'Толщина отделки', type:'text', note:'мм'},
-      {group:'Потолок', label:'Основа', type:'select', source:'список: основа'},
-      {group:'Потолок', label:'Отделка', type:'select', source:'список: отделка'},
+    { name:'Конструкции здания', blocks:[
+      {label:'Стена', fields:[
+        {label:'Тип', type:'text'},
+        {label:'Толщина', type:'text', note:'мм'},
+        {label:'Отделка', type:'layers', full:true},
+      ]},
+      {label:'Колонны', fields:[
+        {label:'Тип', type:'text'},
+        {label:'Сечение', type:'text'},
+        {label:'Шаг', type:'text'},
+        {label:'Отделка', type:'layers', full:true},
+      ]},
+      {label:'Балки', repeat:true, item:'Балка', fields:[
+        {label:'Тип', type:'text'},
+        {label:'Сечение', type:'text'},
+        {label:'Уровень', type:'text'},
+        {label:'Отделка', type:'layers', full:true},
+      ]},
+      {label:'Полы', fields:[
+        {label:'Тип', type:'text'},
+        {label:'Толщина / сечение', type:'text'},
+        {label:'Отделка', type:'layers', full:true},
+      ]},
+      {label:'Потолок', fields:[
+        {label:'Тип', type:'text'},
+        {label:'Толщина', type:'text', note:'мм'},
+        {label:'Отделка', type:'layers', full:true},
+      ]},
+    ], fields:[
       {label:'Коммуникации открытые', type:'text'},
       {label:'Коммуникации скрытые', type:'text'},
     ]},
     { name:'Модули / участки', repeating:true, item:'Модуль', fields:[
       {label:'Название', type:'text'},
+      {label:'Расположение', type:'select', source:'Помещение; Улица'},
+      {label:'Тип установки', type:'select', source:'Пристенный; Самостоящий'},
       {label:'Тип модуля', type:'select', source:'Обычный модуль; Типовой элемент'},
       {label:'Типовой элемент', type:'select', source:'список: типовой_элемент'},
       {label:'Высота', type:'text', note:'м'},
@@ -256,6 +281,11 @@
       control = `<div class="toggle" data-key data-val="">
         <button type="button" onclick="setToggle(this,'Да')">Да</button>
         <button type="button" onclick="setToggle(this,'Нет')">Нет</button></div>`;
+    } else if(f.type==='layers'){
+      return `<div class="field full" data-type="layers" data-label="${f.label}">
+        <label class="lbl">${f.label||'Отделка'} (слоями)</label>
+        <div class="layer-list">${layerRowHTML()}</div>
+        <button type="button" class="btn-add layer-add" onclick="addLayer(this)">＋ добавить слой отделки</button></div>`;
     } else if(f.type==='file'){
       const k = 'img'+(imgSeq++); imgStore[k]=[];
       control = `<div class="imgrow" data-imgrow="${k}"></div>
@@ -286,17 +316,63 @@
 
   function renderSection(sec, idx){
     const div=document.createElement('div');
-    div.className='section'; div.dataset.section=sec.name;
+    div.className='section'; div.dataset.section=sec.name; div.dataset.secidx=idx;
     if(sec.repeating){
       div.innerHTML=`<h2>${sec.name}</h2><div class="rep-list" data-rep="${idx}"></div>
         <button class="btn-add" onclick="addRepItem(${idx})">+ Добавить ${sec.item.toLowerCase()}</button>`;
       document.getElementById('form-root').appendChild(div);
       addRepItem(idx); // одна штука сразу
+    } else if(sec.blocks){
+      let html=`<h2>${sec.name}</h2>`;
+      sec.blocks.forEach((b,bi)=>{ html+=blockHTML(b,idx,bi); });
+      if(sec.fields&&sec.fields.length) html+=`<div class="extra-fields">${fieldsGridHTML(sec.fields)}</div>`;
+      div.innerHTML=html;
+      document.getElementById('form-root').appendChild(div);
     } else {
       div.innerHTML=`<h2>${sec.name}</h2>${fieldsGridHTML(sec.fields)}`;
       document.getElementById('form-root').appendChild(div);
     }
   }
+
+  function blockHTML(b, si, bi){
+    const body = b.repeat
+      ? `<div class="rep-items"></div>
+         <button type="button" class="btn-add" onclick="addBlockItem(${si},${bi})">+ Добавить ${b.item.toLowerCase()}</button>`
+      : fieldsGridHTML(b.fields);
+    return `<div class="block" data-secidx="${si}" data-blockidx="${bi}">
+      <div class="block-head"><span class="block-title">${b.label}</span>
+        <div class="toggle presence" data-val="">
+          <button type="button" onclick="setPresence(this,'Есть')">Есть</button>
+          <button type="button" onclick="setPresence(this,'Нет')">Нет</button></div></div>
+      <div class="block-body" style="display:none">${body}</div></div>`;
+  }
+  function setPresence(btn,val){
+    const wrap=btn.closest('.toggle');
+    wrap.dataset.val = wrap.dataset.val===val ? '' : val;
+    [...wrap.querySelectorAll('button')].forEach(b=>b.classList.toggle('on', b.textContent===wrap.dataset.val));
+    const block=btn.closest('.block'), body=block.querySelector('.block-body');
+    const show = wrap.dataset.val==='Есть';
+    body.style.display = show?'block':'none';
+    if(show){ const rep=body.querySelector('.rep-items'); if(rep && rep.children.length===0) addBlockItem(+block.dataset.secidx,+block.dataset.blockidx); }
+  }
+  function addBlockItem(si,bi){
+    const b=SECTIONS[si].blocks[bi];
+    const block=document.querySelector(`.block[data-secidx="${si}"][data-blockidx="${bi}"]`);
+    const list=block.querySelector('.rep-items');
+    const n=list.children.length+1;
+    const item=document.createElement('div');
+    item.className='rep-item'; item.dataset.blockitem='1';
+    item.innerHTML=`<div class="rep-item-head"><span class="tag">${b.item} ${n}</span>
+      <button type="button" class="btn-del" onclick="this.closest('.rep-item').remove()">×</button></div>
+      ${fieldsGridHTML(b.fields)}`;
+    list.appendChild(item);
+  }
+  function layerRowHTML(){
+    return `<div class="layer-item"><input type="text" class="layer-mat" placeholder="отделка" style="flex:2">
+      <input type="text" class="layer-th" placeholder="мм" style="flex:1">
+      <button type="button" class="btn-del" onclick="this.closest('.layer-item').remove()">×</button></div>`;
+  }
+  function addLayer(btn){ btn.previousElementSibling.insertAdjacentHTML('beforeend', layerRowHTML()); }
 
   const repCounters={};
   function addRepItem(idx){
@@ -344,6 +420,7 @@
     if(t==='select'){ const c=el.querySelector('[data-key]'); return c?c.value:''; }
     if(t==='multi'){ return [...el.querySelectorAll('.chip.on')].map(c=>c.textContent); }
     if(t==='toggle'){ return el.querySelector('.toggle').dataset.val||''; }
+    if(t==='layers'){ return [...el.querySelectorAll('.layer-item')].map(r=>({'Отделка':r.querySelector('.layer-mat').value.trim(),'Толщина':r.querySelector('.layer-th').value.trim()})).filter(x=>x['Отделка']||x['Толщина']); }
     if(t==='file'){ const k=el.dataset.imgkey; return (imgStore[k]||[]).map(im=>im.name); }
     return '';
   }
@@ -357,10 +434,23 @@
 
   function buildData(){
     const data={};
-    document.querySelectorAll('#form-root > .section').forEach((sec,idx)=>{
-      const s=SECTIONS[idx];
+    document.querySelectorAll('#form-root > .section').forEach((sec)=>{
+      const idx=+sec.dataset.secidx, s=SECTIONS[idx];
       if(s.repeating){
         data[s.name]=[...sec.querySelectorAll('[data-repitem]')].map(item=>collectFieldsContainer(item));
+      } else if(s.blocks){
+        const obj={};
+        s.blocks.forEach((b,bi)=>{
+          const blockEl=sec.querySelector(`.block[data-blockidx="${bi}"]`);
+          const presence=blockEl.querySelector('.presence').dataset.val||'';
+          if(b.repeat){
+            obj[b.label]={'Наличие':presence,'Список':[...blockEl.querySelectorAll('[data-blockitem]')].map(it=>collectFieldsContainer(it))};
+          } else {
+            obj[b.label]=Object.assign({'Наличие':presence}, collectFieldsContainer(blockEl.querySelector('.block-body')));
+          }
+        });
+        if(s.fields&&s.fields.length){ const ex=sec.querySelector('.extra-fields'); if(ex) Object.assign(obj, collectFieldsContainer(ex)); }
+        data[s.name]=obj;
       } else {
         data[s.name]=collectFieldsContainer(sec);
       }
