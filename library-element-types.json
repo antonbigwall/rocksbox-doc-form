@@ -1,0 +1,5 @@
+[
+  { "name": "Kilterboard", "description": "Типовой тренажёр с рамой, панелями, двигателями и разметкой" },
+  { "name": "Moonboard", "description": "Типовой тренажёр Moon Climbing" },
+  { "name": "Tensionboard", "description": "Типовой тренажёр с регулировкой наклона" }
+]

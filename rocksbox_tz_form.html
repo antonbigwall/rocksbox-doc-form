@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocksbox — Карточка проекта</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ecd8; --bg-deep: #ece1c6; --panel: #faf5e9; --panel-2: #f1e8d2;
+    --line: #d8c8a4; --ink: #2e2719; --ink-dim: #7a6f57; --accent: #b8502e;
+    --accent-soft: #e9d3c4; --ok: #5a7d3c; --field: #fffdf7; --radius: 10px;
+    --display: 'Open Sans','Segoe UI',sans-serif;
+    --body: 'Open Sans','Segoe UI',sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); background-image: radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 40%); color: var(--ink); font-family: var(--body); line-height: 1.55; padding: 32px 18px 130px; max-width: 940px; margin: 0 auto; font-size: 17px; }
+  h1 { font-family: var(--display); font-size: 30px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .sub { color: var(--ink-dim); font-size: 15px; margin-bottom: 28px; }
+  .section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(120,90,40,0.05); }
+  .section > h2 { font-family: var(--display); font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 14px; color: var(--ink-dim); font-weight: 500; }
+  input[type=text], select, textarea { background: var(--field); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); padding: 10px 12px; font-size: 16px; font-family: var(--body); width: 100%; }
+  textarea { resize: vertical; min-height: 52px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .module { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+  .module-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .module-head .tag { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; color: #fff; background: var(--accent); padding: 3px 12px; border-radius: 20px; }
+  .all-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-dim); cursor: pointer; user-select: none; margin-top: 4px; }
+  .all-toggle input { width: 15px; height: 15px; accent-color: var(--accent); }
+  .all-toggle.on { color: var(--ok); font-weight: 600; }
+  .all-toggle.hide-single { display: none; }
+  body.single-module .all-toggle { display: none; }
+  .locked { opacity: 0.5; pointer-events: none; background: var(--bg-deep); }
+  .locked-note { font-size: 12px; color: var(--ok); font-style: italic; }
+  /* chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { font-size: 14px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--field); color: var(--ink-dim); cursor: pointer; user-select: none; transition: all 0.12s; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chip-add { border-style: dashed; color: var(--accent); }
+  /* images */
+  .imgrow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .imgcard { position: relative; width: 110px; }
+  .imgcard img { width: 110px; height: 80px; object-fit: cover; border-radius: 7px; border: 1px solid var(--line); }
+  .imgcard .cap { font-size: 11px; color: var(--ink-dim); margin-top: 3px; text-align: center; }
+  .imgcard .rm { position: absolute; top: -7px; right: -7px; background: var(--accent); color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; padding: 8px 14px; border: 1.5px dashed var(--line); border-radius: 7px; color: var(--accent); cursor: pointer; background: var(--field); }
+  .upload-btn:hover { border-color: var(--accent); }
+  button { font-family: var(--body); cursor: pointer; border: none; border-radius: 7px; font-weight: 600; font-size: 16px; padding: 11px 18px; transition: filter 0.15s, transform 0.05s; }
+  button:hover { filter: brightness(1.06); }
+  button:active { transform: translateY(1px); }
+  .btn-add { background: transparent; color: var(--accent); border: 1.5px dashed var(--line); width: 100%; padding: 13px; font-size: 15px; }
+  .btn-add:hover { border-color: var(--accent); background: var(--panel-2); }
+  .btn-del { background: transparent; color: var(--ink-dim); font-size: 22px; padding: 0 8px; line-height: 1; }
+  .btn-del:hover { color: var(--accent); }
+  .bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(244,236,216,0.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); padding: 13px 16px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+  .out { background: #2e2719; color: #f0e6cf; border-radius: 8px; font-family: 'SF Mono',Consolas,monospace; font-size: 12px; padding: 16px; margin-top: 14px; white-space: pre-wrap; word-break: break-word; display: none; max-height: 300px; overflow-y: auto; }
+  .out.show { display: block; }
+  .hint { font-size: 13px; color: var(--ink-dim); margin-top: 4px; }
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 15px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99; }
+  .toast.show { opacity: 1; }
+  .mount-grid { display: grid; grid-template-columns: 90px 1fr; gap: 8px 12px; align-items: center; }
+  .mount-grid label { font-size: 14px; }
+</style>
+</head>
+<body class="single-module">
+  <h1>Карточка проекта Rocksbox</h1>
+  <div class="sub">Источник правды для ТЗ и договора. Заполняешь один раз — документы собираются отсюда.</div>
+
+  <!-- ОБЩИЕ ДАННЫЕ -->
+  <div class="section">
+    <h2>Общие данные проекта</h2>
+    <div class="grid">
+      <div class="field full"><label>Адрес объекта</label><input type="text" id="p_address" placeholder="г. Санкт-Петербург, площадь Карла Фаберже"></div>
+      <div class="field"><label>Название проекта</label><input type="text" id="p_name" placeholder="Ладожская"></div>
+      <div class="field"><label>Расположение</label><select id="p_location"><option>В помещении</option><option>На улице</option><option>Смешанное</option></select></div>
+      <div class="field"><label>Номер договора</label><input type="text" id="p_contract" placeholder="№0922 от 07.06.2022"></div>
+      <div class="field"><label>Контактное лицо заказчика</label><input type="text" id="p_contact" placeholder="Дольник Н.В."></div>
+    </div>
+    <div class="field full" style="margin-top:14px">
+      <label>Рисунки проекта (план расположения, разрезы)</label>
+      <div class="imgrow" id="proj_imgs"></div>
+      <label class="upload-btn" style="margin-top:8px">＋ Загрузить рисунок<input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this,'proj')"></label>
+    </div>
+  </div>
+
+  <!-- СПРАВОЧНИКИ -->
+  <div class="section">
+    <h2>Вспомогательные справочники (для референции)</h2>
+    <div class="hint">Типы добавляются прямо в модулях кнопкой «плюс». Эта данные сохраняются в проекте.</div>
+    <div class="grid">
+      <div class="field full">
+        <label>Панели</label>
+        <div id="panel-types-list" class="catalog-list"></div>
+      </div>
+      <div class="field full">
+        <label>Маты</label>
+        <div id="mat-types-list" class="catalog-list"></div>
+      </div>
+      <div class="field full">
+        <label>Типовые элементы</label>
+        <div id="elements-types-list" class="catalog-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- УПРАВЛЕНИЕ БИБЛИОТЕКОЙ -->
+  <div class="section">
+    <h2>Управление библиотекой типов</h2>
+    <div class="hint">Импортируй один файл `library-types.csv` для обновления всех справочников. Экспортируй его для редактирования в Excel/Sheets.</div>
+    <div class="grid">
+      <div class="field full">
+        <label>Единый справочник типов (library-types.csv)</label>
+        <div style="display:flex;gap:8px; flex-wrap:wrap">
+          <button type="button" class="btn-add" onclick="document.getElementById('csv_library').click()">📥 Импортировать</button>
+          <button type="button" class="btn-add" onclick="exportLibraryCSV()">📤 Экспортировать</button>
+          <span class="hint" style="margin-top:8px; display:block; width:100%;">Строки: category;name;carrier;finish;note;description. Категории: construction, panel, mat, element.</span>
+        </div>
+        <input type="file" id="csv_library" accept=".csv" style="display:none" onchange="uploadLibraryCSV(this)">
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДУЛИ -->
+  <div class="section">
+    <h2>Модули / участки</h2>
+    <div id="modules"></div>
+    <button class="btn-add" onclick="addModule()">+ Добавить модуль</button>
+  </div>
+
+  <!-- ОБЩЕЕ ДЛЯ ВСЕХ -->
+  <div class="section">
+    <h2>Общее для всех модулей</h2>
+    <div id="common-auto" class="hint">Поля, отмеченные «ко всем» (появляются со 2-го модуля), собираются здесь.</div>
+  </div>
+
+  <!-- ПАНЕЛИ -->
+  <div class="section">
+    <h2>Панели скалодрома</h2>
+    <div class="grid">
+      <div class="field"><label>Сетка отверстий под зацепки</label><input type="text" id="pan_grid" list="dl_grid" placeholder="М10, шаг 150–160мм, менее 25 шт/м²"></div>
+      <div class="field"><label>Тип спитов (закладных гаек)</label><input type="text" id="pan_spit" placeholder="на саморезы, резьба М10"></div>
+      <div class="field"><label>Верхняя кромка панелей</label><input type="text" id="pan_edge" placeholder="утолщённый край со скруглением"></div>
+      <div class="field"><label>Люки доступа внутрь</label><select id="pan_hatch"><option>Да</option><option>Нет</option></select></div>
+      <div class="field full"><label>Примыкание матов (юбка)</label><input type="text" id="pan_skirt" placeholder="фанерная юбка 400мм вдоль основания"></div>
+    </div>
+  </div>
+
+  <!-- МАТЫ -->
+  <div class="section">
+    <h2>Маты</h2>
+    <div class="grid">
+      <div class="field"><label>Общая высота</label><input type="text" id="mat_height" placeholder="300мм"></div>
+      <div class="field"><label>Покрытие (ткань, цвет)</label><input type="text" id="mat_fabric" placeholder="армированный ковролин, серый"></div>
+      <div class="field full"><label>Наполнитель (слои)</label><textarea id="mat_filler" placeholder="верхний ПВВ 45гр 50мм; нижний EL 22гр 250мм"></textarea></div>
+      <div class="field full"><label>Примыкания</label><textarea id="mat_join" placeholder="к скалодрому вплотную к юбке; к проходам открытое через напольные планки"></textarea></div>
+    </div>
+  </div>
+
+  <!-- КОНСТРУКЦИИ ЗДАНИЯ -->
+  <div class="section">
+    <h2>Конструкции здания</h2>
+    <div class="grid">
+      <div class="field full"><label>Полы (перекрытие, отделка)</label><input type="text" id="bld_floor" placeholder="ж/б плита 220мм, отделка отсутствует"></div>
+      <div class="field full"><label>Колонны</label><input type="text" id="bld_columns" placeholder="ж/б 400х400мм, гипсокартон"></div>
+      <div class="field full"><label>Стены и перегородки</label><input type="text" id="bld_walls" placeholder="сэндвич 150мм; пеноблок 200мм"></div>
+      <div class="field full"><label>Потолок</label><input type="text" id="bld_ceiling" placeholder="металлические фермы"></div>
+      <div class="field"><label>Коммуникации открытые</label><input type="text" id="bld_comms_open" placeholder="отопление, пожарный щит"></div>
+      <div class="field"><label>Коммуникации скрытые</label><input type="text" id="bld_comms_hidden" placeholder="вентиляционные короба"></div>
+    </div>
+  </div>
+
+  <!-- ОРГАНИЗАЦИЯ РАБОТ -->
+  <div class="section">
+    <h2>Допуски, разгрузка, организация работ</h2>
+    <div class="grid">
+      <div class="field"><label>Наряд-допуски</label><input type="text" id="org_permits" placeholder="высота — требуются; огневые — требуются"></div>
+      <div class="field"><label>Этаж монтажа</label><input type="text" id="org_floor" placeholder="4"></div>
+      <div class="field full"><label>Данные по разгрузке</label><textarea id="org_unload" placeholder="зона разгрузки ТРЦ, грузовой лифт, лестница до 4м"></textarea></div>
+      <div class="field full"><label>Смежные работы и ограничения</label><textarea id="org_other" placeholder="монтаж антресолей, освещения; шум круглосуточно"></textarea></div>
+    </div>
+  </div>
+
+  <!-- РЕКВИЗИТЫ ДЛЯ ДОГОВОРА -->
+  <div class="section">
+    <h2>Реквизиты для договора</h2>
+    <div class="grid">
+      <div class="field"><label>Заказчик (наименование)</label><input type="text" id="req_name" placeholder="ООО «...»"></div>
+      <div class="field"><label>ИНН / КПП</label><input type="text" id="req_inn" placeholder="7700000000 / 770001001"></div>
+      <div class="field"><label>ОГРН</label><input type="text" id="req_ogrn" placeholder=""></div>
+      <div class="field"><label>Расчётный счёт</label><input type="text" id="req_account" placeholder=""></div>
+      <div class="field"><label>Банк</label><input type="text" id="req_bank" placeholder=""></div>
+      <div class="field"><label>БИК</label><input type="text" id="req_bik" placeholder=""></div>
+      <div class="field full"><label>Юридический адрес</label><input type="text" id="req_addr" placeholder=""></div>
+      <div class="field full"><label>Подписант (ФИО, должность, основание)</label><input type="text" id="req_signer" placeholder="Генеральный директор ... , на основании Устава"></div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button class="btn-ghost" onclick="loadDemo()">Пример</button>
+    <button class="btn-ghost" onclick="saveProject()">💾 Сохранить проект</button>
+    <label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer">📂 Открыть<input type="file" accept=".json" style="display:none" onchange="loadProject(this)"></label>
+    <button class="btn-primary" onclick="exportData()">Собрать для Claude</button>
+  </div>
+  <div class="out" id="output"></div>
+  <div class="toast" id="toast">Готово</div>
+
+<script>
+  const SHARED_FIELDS = ['frame','coating','plywood'];
+  let moduleCount = 0;
+  let commonValues = {};
+  let projImages = []; // {name, data}
+  const moduleImages = {}; // {moduleId: [{name,data}]}
+
+  const FRAME_OPTS = ['Деревянный','Металлический','Деревянно-металлический'];
+  const COATING_OPTS = ['Полиуретановый лак','Краска','Лак/краска по дизайн-проекту','Шершавое фрикционное'];
+  const PLYWOOD_OPTS = ['18','21'];
+  const GRID_OPTS = ['М10, шаг 150–160мм','М10, шаг 150мм, менее 25 шт/м²','без отверстий'];
+  const MOUNT_OPTS = ['Нет','Анкерные болты','Химические анкеры','Сварка','Через деревянные пояса и лежень','Метрический крепёж'];
+  let GEOMETRY_TAGS = ['Вертикаль','Слабые нависания','Средние нависания','Сильные нависания','Нос/карниз','Грот','Новички','Обучение','Соревнования','Коммерческие трассы'];
+
+  // Библиотека (базовые типы — из отдельных JSON файлов)
+  let libConstructionTypes = [
+    { name: 'Ж/б плита 220 мм', carrier: 'Ж/б', finish: 'Без отделки', note: 'Основное перекрытие' },
+    { name: 'Пеноблок 200 мм', carrier: 'Пеноблок', finish: 'Штукатурка', note: 'Внутренние стены' },
+    { name: 'Ж/б 400х400 колонна', carrier: 'Ж/б', finish: 'Гипсокартон', note: 'Основные колонны' },
+    { name: 'Сэндвич 150 мм', carrier: 'Сэндвич', finish: 'Окрашено', note: 'Ограждающие конструкции' }
+  ];
+  let libPanelTypes = [
+    { name: 'Фанера 18 мм, М10', description: 'Сетка 150–160 мм, менее 25 шт/м²' },
+    { name: 'Фанера 21 мм, М10', description: 'Сетка 150–160 мм, менее 25 шт/м², усиленная' }
+  ];
+  let libMatTypes = [
+    { name: 'ПВХ 900 гр/м²', description: 'Серый, 300 мм, ПВВ 45гр 50мм + EL 22гр 250мм' },
+    { name: 'Ковролин армированный', description: 'Серый, 250 мм, полиамид на велкро' }
+  ];
+  let libElementTypes = [
+    { name: 'Kilterboard', description: 'Типовой тренажёр с рамой, панелями, двигателями и разметкой' },
+    { name: 'Moonboard', description: 'Типовой тренажёр Moon Climbing' },
+    { name: 'Tensionboard', description: 'Типовой тренажёр с регулировкой наклона' }
+  ];
+
+  // Новые типы, добавленные в текущем проекте
+  let newConstructionTypes = [];
+  let newPanelTypes = [];
+  let newMatTypes = [];
+  let newElementTypes = [];
+
+  // Комбинированные (библиотека + новые)
+  let constructionTypes = [...libConstructionTypes];
+  let panelTypes = [...libPanelTypes];
+  let matTypes = [...libMatTypes];
+  let elementTypes = [...libElementTypes];
+
+  function optionsHTML(arr){ return arr.map(o=>`<option value="${o}">${o}</option>`).join(''); }
+  function catalogOptions(arr){ return arr.map(o=>`<option value="${o.name}">${o.name}</option>`).join(''); }
+  function catalogSummary(item){ if(!item) return ''; if(typeof item==='string') return item; return `${item.name}${item.description?': '+item.description:''}${item.carrier? ' • носитель '+item.carrier:''}${item.finish? ' • отделка '+item.finish:''}`; }
+  function mountSelect(cls, val){ return `<select class="${cls}">${MOUNT_OPTS.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`; }
+
+  function addModule(data = {}) {
+    moduleCount++;
+    const idx = moduleCount;
+    const mid = 'm'+idx;
+    moduleImages[mid] = data.images || [];
+    const div = document.createElement('div');
+    div.className = 'module';
+    div.dataset.mid = mid;
+    const selGeom = data.geometry || [];
+    div.innerHTML = `
+      <div class="module-head"><span class="tag">Модуль ${idx}</span><button class="btn-del" onclick="removeModule(this)">×</button></div>
+      <div class="grid">
+        <div class="field"><label>Название</label><input type="text" class="m_name" placeholder="Compwall" value="${data.name||''}"></div>
+        <div class="field"><label>Высота</label><input type="text" class="m_height" placeholder="4,5–5,2 м" value="${data.height||''}"></div>
+        <div class="field"><label>Протяжённость / ширина</label><input type="text" class="m_width" placeholder="34 м" value="${data.width||''}"></div>
+        <div class="field"><label>Вылаз наверх</label><select class="m_exit"><option ${data.exit==='Нет'?'selected':''}>Нет</option><option ${data.exit==='Да'?'selected':''}>Да</option></select></div>
+        <div class="field"><label>Тип модуля</label><select class="m_module_type" onchange="toggleModuleType(this)"><option ${data.moduleType==='Типовой элемент'?'':'selected'}>Обычный модуль</option><option ${data.moduleType==='Типовой элемент'?'selected':''}>Типовой элемент</option></select></div>
+        <div class="field" id="module-element-field-${mid}" style="display:${data.moduleType==='Типовой элемент'?'flex':'none'}"><label>Типовой элемент</label><div style="display:flex;gap:8px"><select class="m_element_type" style="flex:1">${catalogOptions(elementTypes, data.elementType||'')}</select><button type="button" class="btn-add" onclick="promptAddType('element')">＋</button></div></div>
+        <div class="field"><label>Тип панели</label><div style="display:flex;gap:8px"><select class="m_panel_type" style="flex:1"><option value=""></option>${catalogOptions(panelTypes, data.panelType||'')}</select><button type="button" class="btn-add" onclick="promptAddType('panel')">＋</button></div></div>
+        <div class="field"><label>Тип мата</label><div style="display:flex;gap:8px"><select class="m_mat_type" style="flex:1"><option value=""></option>${catalogOptions(matTypes, data.matType||'')}</select><button type="button" class="btn-add" onclick="promptAddType('mat')">＋</button></div></div>
+        <div class="field full">
+          <label>Конструкции для крепления каркаса</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><small style="color:var(--ink-dim)">К полу</small><div style="display:flex;gap:6px"><select class="m_const_floor" style="flex:1"><option value=""></option>${catalogOptions(constructionTypes, data.constructionFloor||'')}</select><button type="button" class="btn-add" onclick="promptAddConstruction('floor')">＋</button></div></div>
+            <div><small style="color:var(--ink-dim)">К стене</small><div style="display:flex;gap:6px"><select class="m_const_wall" style="flex:1"><option value=""></option>${catalogOptions(constructionTypes, data.constructionWall||'')}</select><button type="button" class="btn-add" onclick="promptAddConstruction('wall')">＋</button></div></div>
+            <div><small style="color:var(--ink-dim)">К колонне</small><div style="display:flex;gap:6px"><select class="m_const_column" style="flex:1"><option value=""></option>${catalogOptions(constructionTypes, data.constructionColumn||'')}</select><button type="button" class="btn-add" onclick="promptAddConstruction('column')">＋</button></div></div>
+            <div><small style="color:var(--ink-dim)">К балке</small><div style="display:flex;gap:6px"><select class="m_const_beam" style="flex:1"><option value=""></option>${catalogOptions(constructionTypes, data.constructionBeam||'')}</select><button type="button" class="btn-add" onclick="promptAddConstruction('beam')">＋</button></div></div>
+          </div>
+        </div>
+        <div class="field full">
+          <label>Геометрия плоскостей (теги)</label>
+          <div class="chips m_geom">${GEOMETRY_TAGS.map(t=>`<span class="chip ${selGeom.includes(t)?'on':''}" onclick="this.classList.toggle('on')">${t}</span>`).join('')}<span class="chip chip-add" onclick="addGeomTag(this)">＋ свой</span></div>
+        </div>
+        ${sharedFieldHTML('frame','Каркас', FRAME_OPTS, data.frame)}
+        ${sharedFieldHTML('coating','Покрытие панелей', COATING_OPTS, data.coating)}
+        ${sharedFieldHTML('plywood','Толщина фанеры, мм', PLYWOOD_OPTS, data.plywood)}
+        <div class="field full">
+          <label>Крепление каркаса к конструкциям</label>
+          <div class="mount-grid">
+            <label>к полу</label>${mountSelect('mt_floor', (data.mount||{}).floor)}
+            <label>к стенам</label>${mountSelect('mt_walls', (data.mount||{}).walls)}
+            <label>к потолку</label>${mountSelect('mt_ceiling', (data.mount||{}).ceiling)}
+          </div>
+          <input type="text" class="mt_extra" style="margin-top:8px" placeholder="уточнение крепления (напр.: к антресоли на высоте 4,6м)" value="${(data.mount||{}).extra||''}">
+        </div>
+        <div class="field full"><label>Особые требования</label><textarea class="m_special" placeholder="вырезы для окон; проём пожарного выхода; подвод электричества 220В">${data.special||''}</textarea></div>
+        <div class="field full">
+          <label>Рисунки модуля</label>
+          <div class="imgrow" id="imgs_${mid}"></div>
+          <label class="upload-btn" style="margin-top:6px">＋ Загрузить<input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this,'${mid}')"></label>
+        </div>
+      </div>`;
+    document.getElementById('modules').appendChild(div);
+    renderModuleImages(mid);
+    toggleModuleType(div.querySelector('.m_module_type'));
+    refreshLocks(); updateSingleClass();
+  }
+
+  function removeModule(btn){ const m = btn.closest('.module'); delete moduleImages[m.dataset.mid]; m.remove(); updateSingleClass(); refreshLocks(); }
+  function updateSingleClass(){ document.body.classList.toggle('single-module', document.querySelectorAll('.module').length <= 1); }
+
+  function addGeomTag(addBtn){
+    const t = prompt('Новый тег геометрии:');
+    if(!t) return;
+    if(!GEOMETRY_TAGS.includes(t)) GEOMETRY_TAGS.push(t);
+    const chip = document.createElement('span');
+    chip.className = 'chip on';
+    chip.textContent = t;
+    chip.onclick = function(){ this.classList.toggle('on'); };
+    addBtn.parentNode.insertBefore(chip, addBtn);
+  }
+
+  function sharedFieldHTML(key, labelText, opts, val) {
+    return `<div class="field field-with-all" data-shared="${key}"><label>${labelText}</label><input type="text" class="m_${key}" list="dl_${key}" placeholder="выбери или впиши" value="${val||''}"><label class="all-toggle"><input type="checkbox" class="chk_${key}" onchange="toggleAll('${key}', this)">применить ко всем модулям</label></div>`;
+  }
+
+  function catalogOptions(arr, selected = ''){ return arr.map(o=>`<option value="${o.name}"${o.name===selected?' selected':''}>${o.name}</option>`).join(''); }
+  function renderCatalogList(kind){
+    const target = document.getElementById(kind+'-types-list');
+    const data = {
+      construction: constructionTypes,
+      panel: panelTypes,
+      mat: matTypes,
+      element: elementTypes
+    }[kind] || [];
+    target.innerHTML = data.map(item => `<div class="catalog-item"><strong>${item.name}</strong>${item.description?`<div>${item.description}</div>`:''}${item.carrier?`<div>Носитель: ${item.carrier}</div>`:''}${item.finish?`<div>Отделка: ${item.finish}</div>`:''}${item.mount?`<div>Способ крепления: ${item.mount}</div>`:''}${item.note?`<div>${item.note}</div>`:''}</div>`).join('');
+  }
+  function renderCatalogs(){ ['construction','panel','mat','element'].forEach(renderCatalogList); document.querySelectorAll('.m_panel_type, .m_mat_type, .m_element_type, .m_construction_type').forEach(el => {
+      if(el.tagName!=='SELECT') return;
+      const kind = el.className.includes('m_panel_type') ? 'panel' : el.className.includes('m_mat_type') ? 'mat' : el.className.includes('m_element_type') ? 'element' : 'construction';
+      const currentValue = el.value;
+      const options = ['<option value=""></option>'];
+      ( {construction: constructionTypes, panel: panelTypes, mat: matTypes, element: elementTypes}[kind] || []).forEach(item => options.push(`<option value="${item.name}">${item.name}</option>`));
+      el.innerHTML = options.join('');
+      if(currentValue) el.value = currentValue;
+    }); }
+  function promptAddType(kind){
+    const name = prompt('Название нового типа:'); if(!name) return;
+    if(kind==='construction'){
+      const carrier = prompt('Носитель (например: пеноблок, бетон, ж/б):')||'';
+      const finish = prompt('Отделка (например: гипсокартон, плитка):')||'';
+      const note = prompt('Уточнение / примечание:')||'';
+      newConstructionTypes.push({name, carrier, finish, note});
+      constructionTypes = [...libConstructionTypes, ...newConstructionTypes];
+    } else if(kind==='panel'){
+      const description = prompt('Описание типа панели:')||'';
+      newPanelTypes.push({name, description});
+      panelTypes = [...libPanelTypes, ...newPanelTypes];
+    } else if(kind==='mat'){
+      const description = prompt('Описание типа мата:')||'';
+      newMatTypes.push({name, description});
+      matTypes = [...libMatTypes, ...newMatTypes];
+    } else if(kind==='element'){
+      const description = prompt('Описание типового элемента:')||'';
+      newElementTypes.push({name, description});
+      elementTypes = [...libElementTypes, ...newElementTypes];
+    }
+    renderCatalogs();
+  }
+  function promptAddConstruction(location){
+    const name = prompt('Название конструкции:'); if(!name) return;
+    const carrier = prompt('Носитель (например: пеноблок, ж/б):')||'';
+    const finish = prompt('Отделка (например: гипсокартон):')||'';
+    const note = prompt('Эксплуатация / требования:')||'';
+    newConstructionTypes.push({name, carrier, finish, note, location});
+    constructionTypes = [...libConstructionTypes, ...newConstructionTypes];
+    renderCatalogs();
+  }
+  function toggleModuleType(select){
+    const module = select.closest('.module');
+    const elementField = module.querySelector('[id^="module-element-field"]');
+    if(!elementField) return;
+    elementField.style.display = select.value==='Типовой элемент' ? 'flex' : 'none';
+  }
+
+  function toggleAll(key, checkbox) {
+    const field = checkbox.closest('.field-with-all');
+    const input = field.querySelector('.m_'+key);
+    const toggleLabel = checkbox.closest('.all-toggle');
+    if (checkbox.checked) { commonValues[key] = input.value; toggleLabel.classList.add('on'); }
+    else { delete commonValues[key]; toggleLabel.classList.remove('on'); }
+    document.querySelectorAll('.chk_'+key).forEach(c => { if(c!==checkbox) c.checked = checkbox.checked; });
+    refreshLocks(); renderCommonAuto();
+  }
+
+  function refreshLocks() {
+    SHARED_FIELDS.forEach(key => {
+      const isCommon = commonValues.hasOwnProperty(key);
+      const fields = document.querySelectorAll(`[data-shared="${key}"]`);
+      fields.forEach((f, i) => {
+        const input = f.querySelector('.m_'+key);
+        let note = f.querySelector('.locked-note');
+        if (isCommon) {
+          if (i === 0) { input.classList.remove('locked'); if(note) note.remove(); }
+          else { input.value = commonValues[key]; input.classList.add('locked');
+            if(!note){ note=document.createElement('span'); note.className='locked-note'; note.textContent='↑ задано в Общем · нажми чтобы переопределить'; note.style.cursor='pointer'; note.onclick=()=>{input.classList.remove('locked');note.remove();}; f.appendChild(note);} }
+        } else { input.classList.remove('locked'); if(note) note.remove(); }
+      });
+    });
+  }
+
+  function renderCommonAuto() {
+    const labels = {frame:'Каркас', coating:'Покрытие', plywood:'Толщина фанеры, мм'};
+    const el = document.getElementById('common-auto');
+    const keys = Object.keys(commonValues);
+    if (!keys.length) { el.innerHTML = 'Поля, отмеченные «ко всем» (появляются со 2-го модуля), собираются здесь.'; return; }
+    el.innerHTML = keys.map(k => `<div style="padding:5px 0;font-size:15px"><strong style="color:var(--ok)">${labels[k]}:</strong> ${commonValues[k]||'<em>пусто</em>'}</div>`).join('');
+  }
+
+  // парсинг CSV
+  function parseCSV(csv, hasHeader=true){
+    const lines = csv.trim().split('\n');
+    const startIdx = hasHeader ? 1 : 0;
+    return lines.slice(startIdx).map(line => {
+      const parts = line.split(';').map(p => p.trim());
+      return parts;
+    });
+  }
+
+  function importLibraryCSV(kind, csvText){
+    const rows = parseCSV(csvText, true);
+    let lib = [];
+    if(kind === 'construction'){
+      lib = rows.map(r => ({ name: r[0]||'', carrier: r[1]||'', finish: r[2]||'', note: r[3]||'' })).filter(i => i.name);
+      libConstructionTypes = lib;
+      constructionTypes = [...libConstructionTypes, ...newConstructionTypes];
+    } else if(kind === 'panel'){
+      lib = rows.map(r => ({ name: r[0]||'', description: r[1]||'' })).filter(i => i.name);
+      libPanelTypes = lib;
+      panelTypes = [...libPanelTypes, ...newPanelTypes];
+    } else if(kind === 'mat'){
+      lib = rows.map(r => ({ name: r[0]||'', description: r[1]||'' })).filter(i => i.name);
+      libMatTypes = lib;
+      matTypes = [...libMatTypes, ...newMatTypes];
+    } else if(kind === 'element'){
+      lib = rows.map(r => ({ name: r[0]||'', description: r[1]||'' })).filter(i => i.name);
+      libElementTypes = lib;
+      elementTypes = [...libElementTypes, ...newElementTypes];
+    }
+    renderCatalogs();
+    showToast(`Библиотека «${kind}» обновлена (${lib.length} типов)`);
+  }
+
+  function uploadLibraryCSV(input){
+    const file = input.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try { importLibraryCSV(e.target.result); }
+      catch(err){ showToast('Ошибка чтения CSV'); console.error(err); }
+    };
+    reader.readAsText(file, 'UTF-8'); input.value='';
+  }
+
+  function exportLibraryCSV(){
+    const header = 'category;name;carrier;finish;note;description';
+    const rows = [header,
+      ...libConstructionTypes.map(item => `construction;${item.name};${item.carrier};${item.finish};${item.note};`),
+      ...libPanelTypes.map(item => `panel;${item.name};;;;${item.description}`),
+      ...libMatTypes.map(item => `mat;${item.name};;;;${item.description}`),
+      ...libElementTypes.map(item => `element;${item.name};;;;${item.description}`)
+    ];
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'library-types.csv';
+    a.click();
+    showToast('Библиотека экспортирована');
+  }
+
+  // images
+  function addImages(input, target){
+    [...input.files].forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const obj = {name:file.name, data:e.target.result};
+        if(target==='proj'){ projImages.push(obj); renderProjImages(); }
+        else { moduleImages[target].push(obj); renderModuleImages(target); }
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value='';
+  }
+  function renderProjImages(){
+    document.getElementById('proj_imgs').innerHTML = projImages.map((im,i)=>imgCardHTML(im,i,'proj')).join('');
+  }
+  function renderModuleImages(mid){
+    const el = document.getElementById('imgs_'+mid); if(!el) return;
+    el.innerHTML = (moduleImages[mid]||[]).map((im,i)=>imgCardHTML(im,i,mid)).join('');
+  }
+  function imgCardHTML(im,i,target){
+    return `<div class="imgcard"><span class="rm" onclick="rmImage('${target}',${i})">×</span><img src="${im.data}"><div class="cap">${im.name.slice(0,16)}</div></div>`;
+  }
+  function rmImage(target,i){
+    if(target==='proj'){ projImages.splice(i,1); renderProjImages(); }
+    else { moduleImages[target].splice(i,1); renderModuleImages(target); }
+  }
+
+  function val(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+
+  function collectModules(){
+    return [...document.querySelectorAll('.module')].map((m, i) => {
+      const g = c => { const el = m.querySelector(c); return el ? el.value.trim() : ''; };
+      const geom = [...m.querySelectorAll('.m_geom .chip.on')].map(c=>c.textContent);
+      const obj = { '№': i+1, 'Название': g('.m_name'), 'Тип модуля': g('.m_module_type'), 'Типовой элемент': g('.m_element_type'), 'Тип панели': g('.m_panel_type'), 'Тип мата': g('.m_mat_type'), 'Конструкции': { 'к полу': g('.m_const_floor'), 'к стене': g('.m_const_wall'), 'к колонне': g('.m_const_column'), 'к балке': g('.m_const_beam') }, 'Геометрия': geom, 'Высота': g('.m_height'),
+        'Протяжённость': g('.m_width'), 'Вылаз': g('.m_exit'),
+        'Крепление каркаса': { 'к полу': g('.mt_floor'), 'к стенам': g('.mt_walls'), 'к потолку': g('.mt_ceiling'), 'уточнение': g('.mt_extra') },
+        'Особые требования': g('.m_special'),
+        'Рисунки': (moduleImages[m.dataset.mid]||[]).map(im=>im.name) };
+      SHARED_FIELDS.forEach(k => { const label={frame:'Каркас',coating:'Покрытие',plywood:'Толщина фанеры'}[k]; obj[label]=g('.m_'+k); });
+      return obj;
+    });
+  }
+
+  function buildData(){
+    return {
+      'Проект': { 'Адрес': val('p_address'), 'Название': val('p_name'), 'Расположение': val('p_location'), 'Договор': val('p_contract'), 'Контактное лицо': val('p_contact'), 'Рисунки': projImages.map(im=>im.name) },
+      'Общее_для_всех': commonValues,
+      'Модули': collectModules(),
+      'Панели': { 'Сетка отверстий': val('pan_grid'), 'Тип спитов': val('pan_spit'), 'Верхняя кромка': val('pan_edge'), 'Люки': val('pan_hatch'), 'Юбка': val('pan_skirt') },
+      'Маты': { 'Высота': val('mat_height'), 'Покрытие': val('mat_fabric'), 'Наполнитель': val('mat_filler'), 'Примыкания': val('mat_join') },
+      'Конструкции_здания': { 'Полы': val('bld_floor'), 'Колонны': val('bld_columns'), 'Стены': val('bld_walls'), 'Потолок': val('bld_ceiling'), 'Коммуникации открытые': val('bld_comms_open'), 'Коммуникации скрытые': val('bld_comms_hidden') },
+      'Организация_работ': { 'Наряд-допуски': val('org_permits'), 'Этаж монтажа': val('org_floor'), 'Разгрузка': val('org_unload'), 'Смежные работы': val('org_other') },
+      'Реквизиты': { 'Заказчик': val('req_name'), 'ИНН/КПП': val('req_inn'), 'ОГРН': val('req_ogrn'), 'Счёт': val('req_account'), 'Банк': val('req_bank'), 'БИК': val('req_bik'), 'Юр. адрес': val('req_addr'), 'Подписант': val('req_signer') },
+      '_newTypes': {
+        construction: newConstructionTypes,
+        panel: newPanelTypes,
+        mat: newMatTypes,
+        element: newElementTypes
+      }
+    };
+  }
+
+  function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+  function exportData() {
+    const out = document.getElementById('output');
+    out.textContent = JSON.stringify(buildData(), null, 2);
+    out.classList.add('show');
+    out.scrollIntoView({behavior:'smooth', block:'nearest'});
+    if (navigator.clipboard) navigator.clipboard.writeText(out.textContent).then(()=>showToast('Скопировано — вставь Claude в чат')).catch(()=>{});
+  }
+
+  // Сохранение/загрузка проекта целиком (с картинками)
+  function saveProject(){
+    const full = buildData();
+    full._images = { proj: projImages, modules: moduleImages };
+    const blob = new Blob([JSON.stringify(full)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (val('p_name')||'проект') + '_карточка.json';
+    a.click();
+    showToast('Проект сохранён в файл');
+  }
+  function loadProject(input){
+    const file = input.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try { applyData(JSON.parse(e.target.result)); showToast('Проект загружен'); }
+      catch(err){ showToast('Ошибка чтения файла'); }
+    };
+    reader.readAsText(file); input.value='';
+  }
+
+  function applyData(d){
+    const P = d['Проект']||{};
+    document.getElementById('p_address').value = P['Адрес']||'';
+    document.getElementById('p_name').value = P['Название']||'';
+    document.getElementById('p_location').value = P['Расположение']||'В помещении';
+    document.getElementById('p_contract').value = P['Договор']||'';
+    document.getElementById('p_contact').value = P['Контактное лицо']||'';
+    const fill = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+    const PA=d['Панели']||{}; fill('pan_grid',PA['Сетка отверстий']);fill('pan_spit',PA['Тип спитов']);fill('pan_edge',PA['Верхняя кромка']);if(PA['Люки'])document.getElementById('pan_hatch').value=PA['Люки'];fill('pan_skirt',PA['Юбка']);
+    const MA=d['Маты']||{}; fill('mat_height',MA['Высота']);fill('mat_fabric',MA['Покрытие']);fill('mat_filler',MA['Наполнитель']);fill('mat_join',MA['Примыкания']);
+    const B=d['Конструкции_здания']||{}; fill('bld_floor',B['Полы']);fill('bld_columns',B['Колонны']);fill('bld_walls',B['Стены']);fill('bld_ceiling',B['Потолок']);fill('bld_comms_open',B['Коммуникации открытые']);fill('bld_comms_hidden',B['Коммуникации скрытые']);
+    const O=d['Организация_работ']||{}; fill('org_permits',O['Наряд-допуски']);fill('org_floor',O['Этаж монтажа']);fill('org_unload',O['Разгрузка']);fill('org_other',O['Смежные работы']);
+    const R=d['Реквизиты']||{}; fill('req_name',R['Заказчик']);fill('req_inn',R['ИНН/КПП']);fill('req_ogrn',R['ОГРН']);fill('req_account',R['Счёт']);fill('req_bank',R['Банк']);fill('req_bik',R['БИК']);fill('req_addr',R['Юр. адрес']);fill('req_signer',R['Подписант']);
+    commonValues = d['Общее_для_всех']||{};
+    if(d._newTypes){
+      newConstructionTypes = d._newTypes.construction || [];
+      newPanelTypes = d._newTypes.panel || [];
+      newMatTypes = d._newTypes.mat || [];
+      newElementTypes = d._newTypes.element || [];
+      constructionTypes = [...libConstructionTypes, ...newConstructionTypes];
+      panelTypes = [...libPanelTypes, ...newPanelTypes];
+      matTypes = [...libMatTypes, ...newMatTypes];
+      elementTypes = [...libElementTypes, ...newElementTypes];
+    } else {
+      newConstructionTypes = [];
+      newPanelTypes = [];
+      newMatTypes = [];
+      newElementTypes = [];
+      constructionTypes = [...libConstructionTypes];
+      panelTypes = [...libPanelTypes];
+      matTypes = [...libMatTypes];
+      elementTypes = [...libElementTypes];
+    }
+    renderCatalogs();
+    projImages = (d._images && d._images.proj) || [];
+    const savedModImgs = (d._images && d._images.modules) || {};
+    document.getElementById('modules').innerHTML=''; moduleCount=0;
+    (d['Модули']||[]).forEach((m,i)=>{
+      const oldMid = 'm'+(i+1);
+      addModule({ name:m['Название'], moduleType:m['Тип модуля'], elementType:m['Типовой элемент'], panelType:m['Тип панели'], matType:m['Тип мата'], constructionFloor:(m['Конструкции']||{})['к полу'], constructionWall:(m['Конструкции']||{})['к стене'], constructionColumn:(m['Конструкции']||{})['к колонне'], constructionBeam:(m['Конструкции']||{})['к балке'], geometry:m['Геометрия']||[], height:m['Высота'], width:m['Протяжённость'], exit:m['Вылаз'],
+        frame:m['Каркас'], coating:m['Покрытие'], plywood:m['Толщина фанеры'],
+        mount:{ floor:(m['Крепление каркаса']||{})['к полу'], walls:(m['Крепление каркаса']||{})['к стенам'], ceiling:(m['Крепление каркаса']||{})['к потолку'], extra:(m['Крепление каркаса']||{})['уточнение'] },
+        special:m['Особые требования'], images: savedModImgs[oldMid]||[] });
+    });
+    renderProjImages(); renderCommonAuto(); updateSingleClass();
+  }
+
+  function loadDemo() {
+    applyData({
+      'Проект':{'Адрес':'г. Санкт-Петербург, площадь Карла Фаберже','Название':'Ладожская','Расположение':'В помещении','Договор':'№0922 от 07.06.2022','Контактное лицо':'Дольник Н.В.'},
+      'Панели':{'Сетка отверстий':'М10, шаг 150–160мм, менее 25 шт/м²','Тип спитов':'на саморезы, резьба М10','Юбка':'фанерная юбка 400мм вдоль основания','Люки':'Да'},
+      'Маты':{'Высота':'300мм','Покрытие':'армированный ковролин, серый','Наполнитель':'верхний ПВВ 45гр 50мм; нижний EL 22гр 250мм'},
+      'Конструкции_здания':{'Полы':'ж/б плита 220мм','Колонны':'ж/б 400х400мм, гипсокартон','Стены':'сэндвич 150мм; пеноблок 200мм','Потолок':'металлические фермы','Коммуникации открытые':'отопление, пожарный щит','Коммуникации скрытые':'вентиляционные короба'},
+      'Модули':[
+        {'Название':'Интро','Геометрия':['Слабые нависания','Обучение','Новички'],'Высота':'4,8 м','Протяжённость':'23 м','Вылаз':'Нет','Каркас':'Деревянный','Покрытие':'Лак/краска по дизайн-проекту','Толщина фанеры':'21','Крепление':{'к полу':'Химические анкеры','к стенам':'Химические анкеры','к потолку':'Нет','уточнение':'к антресоли ОФП на 3,6м через деревянные пояса и лежень'}},
+        {'Название':'Compwall','Геометрия':['Сильные нависания','Грот','Соревнования'],'Высота':'4,5–5,2 м','Протяжённость':'34 м','Вылаз':'Нет','Каркас':'Деревянный','Покрытие':'Лак/краска по дизайн-проекту','Толщина фанеры':'21','Крепление':{'к полу':'Химические анкеры','к стенам':'Нет','к потолку':'Нет','уточнение':'через деревянные балки 9м и лежень'},'Особые требования':'вырезы для окон слева и справа'}
+      ]
+    });
+  }
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <datalist id="dl_frame">${optionsHTML(FRAME_OPTS)}</datalist>
+    <datalist id="dl_coating">${optionsHTML(COATING_OPTS)}</datalist>
+    <datalist id="dl_plywood">${optionsHTML(PLYWOOD_OPTS)}</datalist>
+    <datalist id="dl_grid">${optionsHTML(GRID_OPTS)}</datalist>
+  `);
+  addModule();
+</script>
+</body>
+</html>
