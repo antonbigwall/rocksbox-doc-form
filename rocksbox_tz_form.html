@@ -26,12 +26,13 @@
   .field.full{grid-column:1/-1;}
   .field.service{background:var(--service);border-left:3px solid var(--service-line);padding:7px 9px;border-radius:6px;}
   label.lbl{font-size:13px;color:var(--ink-dim);font-weight:500;}
-  .field.service label.lbl::after{content:' · служебное (не в документы)';color:var(--service-line);font-size:10px;font-style:italic;}
+  .field.service label.lbl::after{content:' · служебное';color:var(--service-line);font-size:10px;font-style:italic;}
   .note{font-size:11px;color:var(--ink-dim);font-style:italic;}
   input[type=text],select,textarea{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:9px 11px;font-size:15px;font-family:var(--font);width:100%;}
   textarea{resize:vertical;min-height:48px;}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
   select.empty-list{color:var(--ink-dim);font-style:italic;}
+  .info-box{background:#fbf6e8;border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--ink);}
   .toggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:max-content;}
   .toggle button{border:none;background:var(--field);color:var(--ink-dim);font-size:14px;padding:8px 16px;cursor:pointer;font-family:var(--font);}
   .toggle button.on{background:var(--accent);color:#fff;font-weight:600;}
@@ -53,6 +54,7 @@
   .btn-del{background:transparent;color:var(--ink-dim);font-size:20px;padding:0 8px;}
   .btn-del:hover{color:var(--accent);}
   .block{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden;}
+  .block.service{border-left:3px solid var(--service-line);}
   .block-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:var(--panel-2);}
   .block-title{font-weight:700;font-size:15px;}
   .block-body{padding:14px;border-top:1px solid var(--line);}
@@ -77,7 +79,7 @@
 <body>
   <h1>Карточка проекта Rocksbox</h1>
   <div class="sub">Источник правды для ТЗ и договора. Заполняешь один раз — документы собираются отсюда.</div>
-  <div class="stage-banner">⚙️ <b>Стадия: структура.</b> Поля подсказывают ранее введённое (печатай — появятся подсказки), Enter — переход к следующему полю. Часть выпадающих наполним вариантами позже.</div>
+  <div class="stage-banner">⚙️ <b>Стадия: структура.</b> Поля подсказывают ранее введённое (печатай — появятся подсказки), Enter — переход к следующему полю.</div>
   <div class="legend"><span><span class="sw"></span>служебное — для производства/проектирования, в ТЗ и договор не идёт</span></div>
 
   <div id="form-root"></div>
@@ -92,23 +94,27 @@
   <div id="datalists" style="display:none"></div>
 
 <script>
-/* ===== СХЕМА ФОРМЫ =====
-   Тип поля: text | select | multi | toggle | layers | file
-   Флаги: group, full, long, note, default, service
-          showIf:{key:'<label поля-контроллёра в том же блоке>', in:[...значения]}
-   source: 'a; b; c' (готовые варианты) | 'список: имя' (из LISTS) */
+/* Тип поля: text | select | multi | toggle | layers | file | info
+   Флаги: group, full, long, note, default, service, showIf:{key,in:[]}, text(для info)
+   Блок: {label, fields, repeat?, item?, default?('Да'), service?}
+   Раздел: {name, fields?} | {name, repeating?, item?} | {name, blocks?, fields?, fieldsFirst?} */
   const LISTS = {
     'типовой_элемент':['Kilterboard 16x12','Kilterboard 12x12','Tensionboard 12x12','Moonboard 25','Moonboard 40']
   };
+  const ДаНет='Да; Нет';
 
   const SECTIONS = [
     { name:'Проект', fields:[
       {label:'Адрес объекта', type:'text', full:true},
       {label:'Название проекта', type:'text'},
       {label:'Номер договора', type:'text'},
+      {label:'Контрагент (кто строит)', type:'select', source:'ООО «Роксбокс»; ИП Гладышев Антон Александрович; Физлицо Гладышев Антон Александрович'},
       {label:'Контактное лицо заказчика', type:'text'},
       {label:'Email заказчика', type:'text'},
       {label:'Телефон заказчика', type:'text'},
+      {label:'Логотипы Rocksbox', type:'toggle', default:'Да'},
+      {label:'Логотипы — описание', type:'text', showIf:{key:'Логотипы Rocksbox', in:['Да']}},
+      {label:'Противопожарная обработка', type:'info', full:true, text:'На поставляемые материалы предоставляется пожарный сертификат. Противопожарная обработка с лицензией МЧС: не производится.'},
       {label:'Рисунки проекта', type:'file'},
     ]},
 
@@ -158,10 +164,14 @@
       {label:'Типовой элемент', type:'select', source:'список: типовой_элемент', showIf:{key:'Тип модуля', in:['Типовой элемент']}},
       {label:'Высота', type:'text', note:'м'},
       {label:'Протяжённость / ширина', type:'text', note:'м'},
+      {label:'Страховка', type:'multi', source:'Верхняя; Нижняя; Автоматическая', full:true, showIf:{key:'Тип модуля', in:['Трудность']}},
+      {label:'Подкладные пластины станций', type:'toggle', default:'Нет', service:true, showIf:{key:'Тип модуля', in:['Трудность','Скорость']}},
       {label:'Геометрия плоскостей', type:'text', full:true},
 
       {group:'Каркас', label:'Тип каркаса', type:'select', source:'Деревянный; Стальной; Клиновые леса'},
       {group:'Каркас', label:'Покраска каркаса', type:'select', source:'Антисептик; Фумигация для экспорта; Грунт-эмаль', default:'Грунт-эмаль', service:true},
+      {group:'Каркас', label:'Крыша / козырёк', type:'toggle', default:'Нет', showIf:{key:'Расположение', in:['Улица']}},
+      {group:'Каркас', label:'Крыша / козырёк — описание', type:'text', showIf:{key:'Крыша / козырёк', in:['Да']}},
 
       {group:'Крепление каркаса к зданию', label:'к стене', type:'toggle', default:'Нет'},
       {group:'Крепление каркаса к зданию', label:'Способ (стена)', type:'text', showIf:{key:'к стене', in:['Да']}},
@@ -192,6 +202,9 @@
       {group:'Поверхность · Стеклопластик', label:'Покрытие (стеклопластик)', type:'text', default:'Фрикционное', note:'всегда фрикционное', showIf:{key:'Материал панелей', in:['Стеклопластик']}},
       {group:'Поверхность · Стеклопластик', label:'Цвет (стеклопластик)', type:'text', showIf:{key:'Материал панелей', in:['Стеклопластик']}},
       {group:'Поверхность · Стеклопластик', label:'Дизайн', type:'select', source:'Гранит; Известняк', showIf:{key:'Материал панелей', in:['Стеклопластик']}},
+      {group:'Поверхность', label:'Обработка кромок панелей', type:'select', source:'Нет; Скругления R2,5мм', service:true},
+      {group:'Поверхность', label:'J-профиль', type:'toggle', default:'Нет', showIf:{key:'Тип модуля', in:['Трудность']}},
+      {group:'Поверхность', label:'J-профиль — описание', type:'text', showIf:{key:'J-профиль', in:['Да']}},
 
       {group:'Отверстия и крепёж панелей', label:'Отверстия для зацепок', type:'toggle', default:'Да'},
       {group:'Отверстия и крепёж панелей', label:'Закладные гайки', type:'select', source:'С шипами; На саморезах; Нет'},
@@ -224,21 +237,105 @@
       {label:'Рисунки модуля', type:'file', full:true},
     ]},
 
-    { name:'Маты', fields:[
-      {label:'Общая высота', type:'text', note:'мм'},
-      {label:'Покрытие (ткань)', type:'text'},
-      {label:'Наполнитель (слои)', type:'text', long:true, full:true},
-      {label:'Примыкания', type:'text', long:true, full:true},
+    { name:'Маты', blocks:[
+      {label:'Маты', repeat:true, item:'тип матов', default:'Нет', fields:[
+        {label:'Высота', type:'text', note:'мм'},
+        {label:'Ткань покрытия', type:'text'},
+        {label:'Тип чехлов', type:'text'},
+        {group:'Наполнитель', label:'Верхний слой', type:'text'},
+        {group:'Наполнитель', label:'Средний слой', type:'text'},
+        {group:'Наполнитель', label:'Нижний слой', type:'text'},
+        {group:'Наполнитель', label:'Боковые части', type:'text'},
+        {group:'Примыкания', label:'К скалодрому', type:'text', full:true},
+        {group:'Примыкания', label:'Открытые части', type:'text', full:true},
+      ]},
+    ]},
+
+    { name:'Зацепки и Рельефы', blocks:[
+      {label:'Зацепки', default:'Нет', fields:[
+        {group:'Количество', label:'XXL', type:'text', note:'шт'},
+        {group:'Количество', label:'XL', type:'text', note:'шт'},
+        {group:'Количество', label:'L', type:'text', note:'шт'},
+        {group:'Количество', label:'M', type:'text', note:'шт'},
+        {group:'Количество', label:'S', type:'text', note:'шт'},
+        {group:'Количество', label:'XS', type:'text', note:'шт'},
+        {label:'Цвет', type:'text'},
+        {label:'Комплектуется крепежом', type:'toggle', default:'Да'},
+      ]},
+      {label:'Рельефы стеклопластиковые (Макросы)', default:'Нет', fields:[
+        {label:'Количество и цвет', type:'text', full:true},
+      ]},
+      {label:'Рельефы (прочие — уточнить)', default:'Нет', fields:[
+        {label:'Количество и цвет', type:'text', full:true},
+      ]},
+    ]},
+
+    { name:'Снаряжение', blocks:[
+      {label:'Стационарное', repeat:true, item:'позиция', default:'Да', fields:[
+        {label:'Наименование', type:'text'},
+        {label:'Количество', type:'text'},
+      ]},
+      {label:'Личное', repeat:true, item:'позиция', default:'Нет', fields:[
+        {label:'Наименование', type:'text'},
+        {label:'Количество', type:'text'},
+      ]},
+    ]},
+
+    { name:'Дополнительное оборудование', blocks:[
+      {label:'Оборудование', repeat:true, item:'позиция', default:'Нет', fields:[
+        {label:'Наименование', type:'text'},
+        {label:'Количество', type:'text'},
+      ]},
+    ]},
+
+    { name:'Доставка', fields:[
+      {label:'Способ отправки', type:'select', source:'Выделенный транспорт; Транспортная компания; Самовывоз'},
+      {label:'Адрес для отправки', type:'text', full:true, note:'по умолчанию — адрес объекта'},
+      {label:'Отправитель', type:'text', full:true, note:'по умолчанию — контрагент-поставщик'},
+      {label:'Получатель', type:'text', full:true, note:'по умолчанию — заказчик'},
+      {label:'Контактное лицо на получении', type:'text', note:'по умолчанию — контактное лицо по договору'},
+    ]},
+
+    { name:'Разгрузка', fieldsFirst:true, fields:[
+      {label:'Кто разгружает', type:'select', source:'Поставщик; Заказчик', default:'Поставщик'},
+      {label:'Грузчики', type:'select', source:'Монтажники; Наёмные', showIf:{key:'Кто разгружает', in:['Поставщик']}},
+      {group:'Параметры', label:'Способ разгрузки', type:'text', full:true},
+      {group:'Параметры', label:'Путь разгрузки', type:'text'},
+      {group:'Параметры', label:'Этаж монтажа', type:'text'},
+      {group:'Параметры', label:'Размеры лифта (ДШВ, масса)', type:'text'},
+      {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Нет'},
+    ], blocks:[
+      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', fields:[
+        {label:'Тип', type:'select', source:'Манипулятор; Подъёмный кран'},
+        {label:'Количество', type:'text'},
+        {label:'Кто предоставляет', type:'select', source:'Заказчик; Подрядчик', default:'Подрядчик'},
+      ]},
+    ]},
+
+    { name:'Монтаж', fieldsFirst:true, fields:[
+      {label:'Монтаж в нашем объёме', type:'toggle', default:'Да'},
+      {group:'Что монтируем', label:'Каркас', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Каркас — частично', type:'text', showIf:{key:'Каркас', in:['Частично']}},
+      {group:'Что монтируем', label:'Панели', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Панели — частично', type:'text', showIf:{key:'Панели', in:['Частично']}},
+      {group:'Что монтируем', label:'Маты', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Маты — частично', type:'text', showIf:{key:'Маты', in:['Частично']}},
+      {group:'Что монтируем', label:'Зацепки', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Зацепки — частично', type:'text', showIf:{key:'Зацепки', in:['Частично']}},
+      {group:'Накрутка', label:'Способ накрутки', type:'select', source:'По цветам, техническая; По цветам, routesetting; По цветам, лестницей; Вразнобой'},
+      {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Да'},
+    ], blocks:[
+      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', fields:[
+        {label:'Тип', type:'select', source:'Вышка-тура; Электроподъёмник ножничный; Электроподъёмник коленчатый; Подъёмный кран'},
+        {label:'Количество', type:'text'},
+        {label:'Кто предоставляет', type:'select', source:'Заказчик; Подрядчик', default:'Подрядчик'},
+      ]},
     ]},
 
     { name:'Организация работ', fields:[
       {group:'Наряд-допуски', label:'Работы на высоте', type:'toggle'},
       {group:'Наряд-допуски', label:'Огневые работы / сварка', type:'toggle', note:'сварка = огневые, наряд один'},
       {group:'Инструктаж', label:'Периодичность', type:'text', full:true, default:'единоразово перед началом работ'},
-      {group:'Разгрузка', label:'Способ разгрузки', type:'text', full:true},
-      {group:'Разгрузка', label:'Путь разгрузки', type:'text'},
-      {group:'Разгрузка', label:'Этаж монтажа', type:'text'},
-      {group:'Разгрузка', label:'Размеры лифта (ДШВ, масса)', type:'text'},
       {group:'Площадка', label:'Электричество', type:'text', note:'220В, мощность, отдельная линия 16А', full:true},
       {group:'Площадка', label:'Освещение', type:'text', note:'лк'},
       {group:'Площадка', label:'Демонтаж в местах примыкания', type:'toggle'},
@@ -256,6 +353,18 @@
       {group:'Допуск', label:'Страхование на период работ', type:'select', source:'мы; заказчик; не предусмотрено'},
       {group:'Допуск', label:'Сертификат оформлен на', type:'select', source:'ООО; ИП'},
       {group:'Допуск', label:'Класс горючести / КМ запрошен', type:'toggle'},
+    ]},
+
+    { name:'Шильд (маркировка)', blocks:[
+      {label:'Шильд', repeat:true, item:'шильд', default:'Да', service:true, fields:[
+        {label:'Изготовитель', type:'text', default:'ООО «Роксбокс»', service:true},
+        {label:'Импортёр / поставщик', type:'text', service:true},
+        {label:'ГОСТ', type:'select', source:'ГОСТ Р 58066.1-2018 (с точками страховки); ГОСТ Р 58066.2-2018 (боулдеринг)', default:'ГОСТ Р 58066.1-2018 (с точками страховки)', service:true},
+        {label:'Дата установки', type:'text', note:'год — 4 цифры', service:true},
+        {label:'Дата следующего контроля', type:'text', note:'год — 4 цифры', service:true},
+        {label:'Спец. конструкция (не игровое оборудование)', type:'toggle', default:'Нет', note:'для боулдеринга/улицы', service:true},
+        {label:'Предупреждение о покрытии', type:'text', note:'если гравий/нестандарт', service:true},
+      ]},
     ]},
 
     { name:'Итоги', fields:[
@@ -315,7 +424,6 @@
 
   /* ===== рендеринг ===== */
   let imgStore={}; let imgSeq=0;
-
   function optsFromSource(src){
     if(!src) return {list:null, opts:[]};
     const m=src.match(/^список:\s*(.+)$/);
@@ -328,18 +436,31 @@
     const cls='field'+(f.full?' full':'')+(f.service?' service':'');
     const note=f.note?`<span class="note">${f.note}</span>`:'';
     const showif=f.showIf?` data-showif='${JSON.stringify(f.showIf)}'`:'';
+    const grp=f.group?` data-group="${f.group}"`:'';
     const dv=f.default||'';
+    if(f.type==='info'){
+      return `<div class="field full" data-type="info" data-label="${f.label}" data-text="${esc(f.text||'')}"><label class="lbl">${f.label}</label><div class="info-box">${f.text||''}</div></div>`;
+    }
+    if(f.type==='layers'){
+      return `<div class="${cls}" data-type="layers" data-label="${f.label}"${grp}${showif}>
+        <label class="lbl">${f.label||'Отделка'} (слоями)</label>
+        <div class="layer-list">${layerRowHTML()}</div>
+        <button type="button" class="btn-add layer-add" onclick="addLayer(this)">＋ добавить слой отделки</button></div>`;
+    }
+    if(f.type==='file'){
+      const k='img'+(imgSeq++); imgStore[k]=[];
+      return `<div class="field full" data-type="file" data-label="${f.label}" data-imgkey="${k}"><label class="lbl">${f.label} ${note}</label>
+        <div class="imgrow" data-imgrow="${k}"></div>
+        <label class="upload-btn">＋ Загрузить<input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this,'${k}')"></label></div>`;
+    }
     let control='';
     if(f.type==='text'){
-      control = f.long ? `<textarea data-key>${esc(dv)}</textarea>`
-                       : `<input type="text" data-key list="${dlId(f.label)}" value="${esc(dv)}">`;
+      control = f.long ? `<textarea data-key>${esc(dv)}</textarea>` : `<input type="text" data-key list="${dlId(f.label)}" value="${esc(dv)}">`;
     } else if(f.type==='select'){
       const {list,opts}=optsFromSource(f.source);
-      if(opts.length){
-        control=`<select data-key><option value=""></option>${opts.map(o=>`<option${o===dv?' selected':''}>${o}</option>`).join('')}</select>`;
-      } else {
-        control=`<select data-key class="empty-list"><option value="">— варианты позже${list?` (список «${list}»)`:''} —</option></select>`;
-      }
+      control = opts.length
+        ? `<select data-key><option value=""></option>${opts.map(o=>`<option${o===dv?' selected':''}>${o}</option>`).join('')}</select>`
+        : `<select data-key class="empty-list"><option value="">— варианты позже${list?` (список «${list}»)`:''} —</option></select>`;
     } else if(f.type==='multi'){
       const {list,opts}=optsFromSource(f.source);
       control = opts.length
@@ -349,19 +470,8 @@
       control=`<div class="toggle" data-key data-val="${dv}">
         <button type="button" class="${dv==='Да'?'on':''}" onclick="setToggle(this,'Да')">Да</button>
         <button type="button" class="${dv==='Нет'?'on':''}" onclick="setToggle(this,'Нет')">Нет</button></div>`;
-    } else if(f.type==='layers'){
-      return `<div class="${cls}" data-type="layers" data-label="${f.label}"${f.group?` data-group="${f.group}"`:''}${showif}>
-        <label class="lbl">${f.label||'Отделка'} (слоями)</label>
-        <div class="layer-list">${layerRowHTML()}</div>
-        <button type="button" class="btn-add layer-add" onclick="addLayer(this)">＋ добавить слой отделки</button></div>`;
-    } else if(f.type==='file'){
-      const k='img'+(imgSeq++); imgStore[k]=[];
-      return `<div class="field full" data-type="file" data-label="${f.label}" data-imgkey="${k}"><label class="lbl">${f.label} ${note}</label>
-        <div class="imgrow" data-imgrow="${k}"></div>
-        <label class="upload-btn">＋ Загрузить<input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this,'${k}')"></label></div>`;
     }
-    return `<div class="${cls}" data-type="${f.type}" data-label="${f.label}"${f.group?` data-group="${f.group}"`:''}${showif}>
-      <label class="lbl">${f.label} ${note}</label>${control}</div>`;
+    return `<div class="${cls}" data-type="${f.type}" data-label="${f.label}"${grp}${showif}><label class="lbl">${f.label} ${note}</label>${control}</div>`;
   }
 
   function fieldsGridHTML(fields){
@@ -387,8 +497,9 @@
       addRepItem(idx);
     } else if(sec.blocks){
       let html=`<h2>${sec.name}</h2>`;
-      sec.blocks.forEach((b,bi)=>{ html+=blockHTML(b,idx,bi); });
-      if(sec.fields&&sec.fields.length) html+=`<div class="extra-fields">${fieldsGridHTML(sec.fields)}</div>`;
+      const extra = (sec.fields&&sec.fields.length)?`<div class="extra-fields">${fieldsGridHTML(sec.fields)}</div>`:'';
+      const blocks = sec.blocks.map((b,bi)=>blockHTML(b,idx,bi)).join('');
+      html += sec.fieldsFirst ? extra+blocks : blocks+extra;
       div.innerHTML=html;
       document.getElementById('form-root').appendChild(div);
     } else {
@@ -401,10 +512,10 @@
     const body = b.repeat
       ? `<div class="rep-items"></div><button type="button" class="btn-add" onclick="addBlockItem(${si},${bi})">+ Добавить ${b.item.toLowerCase()}</button>`
       : fieldsGridHTML(b.fields);
-    return `<div class="block" data-secidx="${si}" data-blockidx="${bi}">
+    return `<div class="block${b.service?' service':''}" data-secidx="${si}" data-blockidx="${bi}" data-default="${b.default||''}">
       <div class="block-head"><span class="block-title">${b.label}</span>
         <div class="toggle presence" data-val="">
-          <button type="button" onclick="setPresence(this,'Есть')">Есть</button>
+          <button type="button" onclick="setPresence(this,'Да')">Да</button>
           <button type="button" onclick="setPresence(this,'Нет')">Нет</button></div></div>
       <div class="block-body" style="display:none">${body}</div></div>`;
   }
@@ -413,7 +524,7 @@
     wrap.dataset.val = wrap.dataset.val===val ? '' : val;
     [...wrap.querySelectorAll('button')].forEach(b=>b.classList.toggle('on', b.textContent===wrap.dataset.val));
     const block=btn.closest('.block'), body=block.querySelector('.block-body');
-    const show = wrap.dataset.val==='Есть';
+    const show = wrap.dataset.val==='Да';
     body.style.display=show?'block':'none';
     if(show){ const rep=body.querySelector('.rep-items'); if(rep && rep.children.length===0) addBlockItem(+block.dataset.secidx,+block.dataset.blockidx); }
   }
@@ -430,7 +541,6 @@
     applyShowIf(item);
   }
 
-  const repCounters={};
   function addRepItem(idx){
     const sec=SECTIONS[idx];
     const list=document.querySelector(`[data-rep="${idx}"]`);
@@ -461,7 +571,6 @@
   }
   function addLayer(btn){ btn.previousElementSibling.insertAdjacentHTML('beforeend', layerRowHTML()); }
 
-  /* ===== условная видимость (showIf) ===== */
   function applyShowIf(root){
     root.querySelectorAll('.field[data-showif]').forEach(el=>{
       let cond; try{ cond=JSON.parse(el.dataset.showif); }catch(e){ return; }
@@ -491,6 +600,7 @@
     if(t==='select'){ const c=el.querySelector('[data-key]'); return c?c.value:''; }
     if(t==='multi'){ return [...el.querySelectorAll('.chip.on')].map(c=>c.textContent); }
     if(t==='toggle'){ return el.querySelector('.toggle').dataset.val||''; }
+    if(t==='info'){ return el.dataset.text||''; }
     if(t==='layers'){ return [...el.querySelectorAll('.layer-item')].map(r=>({'Отделка':r.querySelector('.layer-mat').value.trim(),'Толщина':r.querySelector('.layer-th').value.trim()})).filter(x=>x['Отделка']||x['Толщина']); }
     if(t==='file'){ const k=el.dataset.imgkey; return (imgStore[k]||[]).map(im=>im.name); }
     return '';
@@ -546,7 +656,6 @@
     r.onload=e=>{ try{ JSON.parse(e.target.result); toast('Загрузка появится позже'); }catch(err){ toast('Ошибка чтения'); } };
     r.readAsText(file); input.value='';
   }
-
   function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
   /* ===== глобальные обработчики ===== */
@@ -564,7 +673,18 @@
   });
 
   /* ===== старт ===== */
+  function initBlocks(){
+    document.querySelectorAll('.block').forEach(block=>{
+      if(block.dataset.default==='Да'){
+        const wrap=block.querySelector('.presence'); wrap.dataset.val='Да';
+        [...wrap.querySelectorAll('button')].forEach(b=>b.classList.toggle('on', b.textContent==='Да'));
+        const body=block.querySelector('.block-body'); body.style.display='block';
+        const rep=body.querySelector('.rep-items'); if(rep && rep.children.length===0) addBlockItem(+block.dataset.secidx,+block.dataset.blockidx);
+      }
+    });
+  }
   SECTIONS.forEach(renderSection);
+  initBlocks();
   Object.keys(dlMap).forEach(refreshDatalist);
   applyShowIf(document);
 </script>
