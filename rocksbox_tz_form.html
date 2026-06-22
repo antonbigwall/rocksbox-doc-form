@@ -10,7 +10,7 @@
     --bg:#f4ecd8; --bg-deep:#ece1c6; --panel:#faf5e9; --panel-2:#f1e8d2;
     --line:#d8c8a4; --ink:#2e2719; --ink-dim:#7a6f57; --accent:#b8502e;
     --accent-soft:#e9d3c4; --ok:#5a7d3c; --field:#fffdf7; --radius:10px;
-    --service:#e9eef3; --service-line:#6b8cae;
+    --service:#e9eef3; --service-line:#6b8cae; --linked:#efe2c2;
     --font:'Open Sans','Segoe UI',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -28,6 +28,17 @@
   label.lbl{font-size:13px;color:var(--ink-dim);font-weight:500;}
   .field.service label.lbl::after{content:' · служебное';color:var(--service-line);font-size:10px;font-style:italic;}
   .note{font-size:11px;color:var(--ink-dim);font-style:italic;}
+  .field input[readonly],.field textarea[readonly]{background:var(--panel-2);color:var(--ink-dim);cursor:default;}
+  .link-btn,.exc-btn{margin-left:8px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px;background:transparent;border:1px solid var(--line);vertical-align:middle;}
+  .link-btn{color:var(--ink-dim);}
+  .link-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .link-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .exc-btn{color:var(--accent);border-color:var(--accent);}
+  .exc-btn:hover{background:var(--accent);color:#fff;}
+  .exc-btn.on{background:var(--ink-dim);color:#fff;border-color:var(--ink-dim);}
+  .field.frozen{background:var(--linked);border:1px solid var(--accent-soft);border-radius:6px;padding:7px 9px;}
+  .field.frozen input,.field.frozen textarea,.field.frozen select{background:transparent;color:var(--ink-dim);pointer-events:none;}
+  .field.frozen .chips,.field.frozen .toggle{pointer-events:none;opacity:.8;}
   input[type=text],select,textarea{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:9px 11px;font-size:15px;font-family:var(--font);width:100%;}
   textarea{resize:vertical;min-height:48px;}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
@@ -108,13 +119,11 @@
       {label:'Адрес объекта', type:'text', full:true},
       {label:'Название проекта', type:'text'},
       {label:'Номер договора', type:'text'},
+      {label:'Год', type:'text', num:true},
       {label:'Контрагент (кто строит)', type:'select', source:'ООО «Роксбокс»; ИП Гладышев Антон Александрович; Физлицо Гладышев Антон Александрович'},
       {label:'Контактное лицо заказчика', type:'text'},
       {label:'Email заказчика', type:'text'},
       {label:'Телефон заказчика', type:'text'},
-      {label:'Логотипы Rocksbox', type:'toggle', default:'Да'},
-      {label:'Логотипы — описание', type:'text', showIf:{key:'Логотипы Rocksbox', in:['Да']}},
-      {label:'Противопожарная обработка', type:'info', full:true, text:'На поставляемые материалы предоставляется пожарный сертификат. Противопожарная обработка с лицензией МЧС: не производится.'},
       {label:'Рисунки проекта', type:'file'},
     ]},
 
@@ -162,26 +171,30 @@
       {label:'Тип установки', type:'select', source:'Пристенный; Самостоящий'},
       {label:'Тип модуля', type:'select', source:'Трудность; Скорость; Боулдеринг; Типовой элемент'},
       {label:'Типовой элемент', type:'select', source:'список: типовой_элемент', showIf:{key:'Тип модуля', in:['Типовой элемент']}},
-      {label:'Высота', type:'text', note:'м'},
-      {label:'Протяжённость / ширина', type:'text', note:'м'},
+      {label:'Высота', type:'text', note:'м', num:true},
+      {label:'Протяжённость / ширина', type:'text', note:'м', num:true},
       {label:'Страховка', type:'multi', source:'Верхняя; Нижняя; Автоматическая', full:true, showIf:{key:'Тип модуля', in:['Трудность']}},
       {label:'Подкладные пластины станций', type:'toggle', default:'Нет', service:true, showIf:{key:'Тип модуля', in:['Трудность','Скорость']}},
       {label:'Геометрия плоскостей', type:'text', full:true},
 
       {group:'Каркас', label:'Тип каркаса', type:'select', source:'Деревянный; Стальной; Клиновые леса'},
-      {group:'Каркас', label:'Покраска каркаса', type:'select', source:'Антисептик; Фумигация для экспорта; Грунт-эмаль', default:'Грунт-эмаль', service:true},
+      {group:'Каркас', label:'Покраска каркаса', type:'toggle', default:'Да'},
+      {group:'Каркас', label:'Тип покраски', type:'select', source:'Антисептик; Фумигация для экспорта; Грунт-эмаль', default:'Грунт-эмаль', service:true, showIf:{key:'Покраска каркаса', in:['Да']}},
       {group:'Каркас', label:'Крыша / козырёк', type:'toggle', default:'Нет', showIf:{key:'Расположение', in:['Улица']}},
       {group:'Каркас', label:'Крыша / козырёк — описание', type:'text', showIf:{key:'Крыша / козырёк', in:['Да']}},
 
       {group:'Крепление каркаса к зданию', label:'к стене', type:'toggle', default:'Нет'},
+      {group:'Крепление каркаса к зданию', label:'Какие стены', type:'multi', source:'construct: стены', full:true, showIf:{key:'к стене', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'Способ (стена)', type:'text', showIf:{key:'к стене', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'к колоннам', type:'toggle', default:'Нет'},
+      {group:'Крепление каркаса к зданию', label:'Какие колонны', type:'multi', source:'construct: колонны', full:true, showIf:{key:'к колоннам', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'Способ (колонны)', type:'text', showIf:{key:'к колоннам', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'к полу', type:'toggle', default:'Нет'},
       {group:'Крепление каркаса к зданию', label:'Способ (пол)', type:'text', showIf:{key:'к полу', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'к потолку', type:'toggle', default:'Нет'},
       {group:'Крепление каркаса к зданию', label:'Способ (потолок)', type:'text', showIf:{key:'к потолку', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'к балкам', type:'toggle', default:'Нет'},
+      {group:'Крепление каркаса к зданию', label:'Какие балки', type:'multi', source:'construct: балки', full:true, showIf:{key:'к балкам', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'Способ (балки)', type:'text', showIf:{key:'к балкам', in:['Да']}},
 
       {group:'Тяги', label:'Тип крепёжного элемента', type:'select', source:'Тяги регулируемые; Тяги из перф. уголка с проставкой; Фанерные рёбра+сшивки'},
@@ -222,30 +235,62 @@
       {group:'Соединители панелей', label:'Описание покраски', type:'text', note:'чатлы — грунт-эмаль; сшивки обычно не красим', showIf:{key:'Покраска соединителей', in:['Да']}, service:true},
 
       {group:'Примыкания панелей к зданию', label:'Примык. стена', type:'toggle', default:'Нет'},
+      {group:'Примыкания панелей к зданию', label:'Какие стены (примык.)', type:'multi', source:'construct: стены', full:true, showIf:{key:'Примык. стена', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Описание (стена)', type:'text', showIf:{key:'Примык. стена', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Примык. колонны', type:'toggle', default:'Нет'},
+      {group:'Примыкания панелей к зданию', label:'Какие колонны (примык.)', type:'multi', source:'construct: колонны', full:true, showIf:{key:'Примык. колонны', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Описание (колонны)', type:'text', showIf:{key:'Примык. колонны', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Примык. пол', type:'toggle', default:'Нет'},
       {group:'Примыкания панелей к зданию', label:'Описание (пол)', type:'text', showIf:{key:'Примык. пол', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Примык. потолок', type:'toggle', default:'Нет'},
       {group:'Примыкания панелей к зданию', label:'Описание (потолок)', type:'text', showIf:{key:'Примык. потолок', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Примык. балки', type:'toggle', default:'Нет'},
+      {group:'Примыкания панелей к зданию', label:'Какие балки (примык.)', type:'multi', source:'construct: балки', full:true, showIf:{key:'Примык. балки', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Описание (балки)', type:'text', showIf:{key:'Примык. балки', in:['Да']}},
 
-      {group:'Коммуникации модуля', label:'Коммуникации открытые', type:'text'},
-      {group:'Коммуникации модуля', label:'Коммуникации скрытые', type:'text'},
+      {group:'Коммуникации на участке', label:'Коммуникации открытые', type:'text'},
+      {group:'Коммуникации на участке', label:'Коммуникации скрытые', type:'text'},
       {label:'Рисунки модуля', type:'file', full:true},
+    ]},
+
+    { name:'Логотипы и обработка', fields:[
+      {label:'Логотипы Rocksbox', type:'toggle', default:'Да'},
+      {label:'Количество логотипов', type:'text', num:true, showIf:{key:'Логотипы Rocksbox', in:['Да']}},
+      {label:'Логотипы — описание', type:'text', full:true, showIf:{key:'Логотипы Rocksbox', in:['Да']}},
+      {label:'Противопожарная обработка', type:'info', full:true, text:'На поставляемые материалы предоставляется пожарный сертификат. Противопожарная обработка с лицензией МЧС: не производится.'},
     ]},
 
     { name:'Маты', blocks:[
       {label:'Маты', repeat:true, item:'тип матов', default:'Нет', fields:[
         {label:'Высота', type:'text', note:'мм'},
-        {label:'Ткань покрытия', type:'text'},
-        {label:'Тип чехлов', type:'text'},
-        {group:'Наполнитель', label:'Верхний слой', type:'text'},
-        {group:'Наполнитель', label:'Средний слой', type:'text'},
-        {group:'Наполнитель', label:'Нижний слой', type:'text'},
-        {group:'Наполнитель', label:'Боковые части', type:'text'},
+
+        {group:'Покрытие', label:'Ткань покрытия', type:'select', source:'ПВХ; Ковролин армированный; Кордура', full:true},
+        {group:'Покрытие · ПВХ', label:'Плотность', type:'text', showIf:{key:'Ткань покрытия', in:['ПВХ']}},
+        {group:'Покрытие · ПВХ', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['ПВХ']}},
+        {group:'Покрытие · Ковролин', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['Ковролин армированный']}},
+        {group:'Покрытие · Кордура', label:'Плотность', type:'text', showIf:{key:'Ткань покрытия', in:['Кордура']}},
+        {group:'Покрытие · Кордура', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['Кордура']}},
+
+        {group:'Наполнитель · Верхний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
+        {group:'Наполнитель · Верхний слой', label:'Марка наполнителя', type:'text'},
+        {group:'Наполнитель · Верхний слой', label:'Плотность наполнителя', type:'text'},
+        {group:'Наполнитель · Верхний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
+
+        {group:'Наполнитель · Средний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
+        {group:'Наполнитель · Средний слой', label:'Марка наполнителя', type:'text'},
+        {group:'Наполнитель · Средний слой', label:'Плотность наполнителя', type:'text'},
+        {group:'Наполнитель · Средний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
+
+        {group:'Наполнитель · Нижний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
+        {group:'Наполнитель · Нижний слой', label:'Марка наполнителя', type:'text'},
+        {group:'Наполнитель · Нижний слой', label:'Плотность наполнителя', type:'text'},
+        {group:'Наполнитель · Нижний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
+
+        {group:'Наполнитель · Боковые части', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
+        {group:'Наполнитель · Боковые части', label:'Марка наполнителя', type:'text'},
+        {group:'Наполнитель · Боковые части', label:'Плотность наполнителя', type:'text'},
+        {group:'Наполнитель · Боковые части', label:'Толщина слоя', type:'text', note:'мм', num:true},
+
         {group:'Примыкания', label:'К скалодрому', type:'text', full:true},
         {group:'Примыкания', label:'Открытые части', type:'text', full:true},
       ]},
@@ -305,7 +350,7 @@
       {group:'Параметры', label:'Размеры лифта (ДШВ, масса)', type:'text'},
       {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Нет'},
     ], blocks:[
-      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', fields:[
+      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', showIf:{key:'Подъёмные механизмы', in:['Да']}, fields:[
         {label:'Тип', type:'select', source:'Манипулятор; Подъёмный кран'},
         {label:'Количество', type:'text'},
         {label:'Кто предоставляет', type:'select', source:'Заказчик; Подрядчик', default:'Подрядчик'},
@@ -318,14 +363,16 @@
       {group:'Что монтируем', label:'Каркас — частично', type:'text', showIf:{key:'Каркас', in:['Частично']}},
       {group:'Что монтируем', label:'Панели', type:'select', source:'Да; Нет; Частично', default:'Да'},
       {group:'Что монтируем', label:'Панели — частично', type:'text', showIf:{key:'Панели', in:['Частично']}},
-      {group:'Что монтируем', label:'Маты', type:'select', source:'Да; Нет; Частично', default:'Да'},
-      {group:'Что монтируем', label:'Маты — частично', type:'text', showIf:{key:'Маты', in:['Частично']}},
+      {group:'Что монтируем', label:'Поролон матов', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Поролон матов — частично', type:'text', showIf:{key:'Поролон матов', in:['Частично']}},
+      {group:'Что монтируем', label:'Чехлы матов', type:'select', source:'Да; Нет; Частично', default:'Да'},
+      {group:'Что монтируем', label:'Чехлы матов — частично', type:'text', showIf:{key:'Чехлы матов', in:['Частично']}},
       {group:'Что монтируем', label:'Зацепки', type:'select', source:'Да; Нет; Частично', default:'Да'},
       {group:'Что монтируем', label:'Зацепки — частично', type:'text', showIf:{key:'Зацепки', in:['Частично']}},
       {group:'Накрутка', label:'Способ накрутки', type:'select', source:'По цветам, техническая; По цветам, routesetting; По цветам, лестницей; Вразнобой'},
       {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Да'},
     ], blocks:[
-      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', fields:[
+      {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', showIf:{key:'Подъёмные механизмы', in:['Да']}, fields:[
         {label:'Тип', type:'select', source:'Вышка-тура; Электроподъёмник ножничный; Электроподъёмник коленчатый; Подъёмный кран'},
         {label:'Количество', type:'text'},
         {label:'Кто предоставляет', type:'select', source:'Заказчик; Подрядчик', default:'Подрядчик'},
@@ -333,24 +380,29 @@
     ]},
 
     { name:'Организация работ', fields:[
-      {group:'Наряд-допуски', label:'Работы на высоте', type:'toggle'},
-      {group:'Наряд-допуски', label:'Огневые работы / сварка', type:'toggle', note:'сварка = огневые, наряд один'},
+      {group:'Производимые виды работ', label:'Работы на высоте', type:'toggle', default:'Нет'},
+      {group:'Производимые виды работ', label:'Огневые работы', type:'toggle', default:'Нет', note:'сварка = огневые, наряд один'},
+      {group:'Производимые виды работ', label:'Электроустановки', type:'toggle', default:'Нет'},
       {group:'Инструктаж', label:'Периодичность', type:'text', full:true, default:'единоразово перед началом работ'},
       {group:'Площадка', label:'Электричество', type:'text', note:'220В, мощность, отдельная линия 16А', full:true},
       {group:'Площадка', label:'Освещение', type:'text', note:'лк'},
-      {group:'Площадка', label:'Демонтаж в местах примыкания', type:'toggle'},
+      {group:'Площадка', label:'Демонтаж в местах примыкания', type:'toggle', default:'Нет'},
+      {group:'Площадка', label:'Демонтаж — описание', type:'text', full:true, showIf:{key:'Демонтаж в местах примыкания', in:['Да']}},
       {group:'Мусор и уборка', label:'Вывоз мусора', type:'select', source:'Подрядчик; Заказчик'},
       {group:'Мусор и уборка', label:'Уборка', type:'select', source:'Подрядчик; Заказчик'},
       {group:'Шум', label:'Работы до 100 дБ', type:'text', note:'время'},
       {group:'Шум', label:'Работы свыше 100 дБ', type:'text', note:'время'},
+      {group:'Доступ', label:'Ограничение по дням', type:'toggle', default:'Нет'},
+      {group:'Доступ', label:'Ограничение по часам работы', type:'toggle', default:'Нет'},
       {group:'Доступ', label:'Часы доступа', type:'text', note:'напр. 8:00–22:00'},
       {group:'Смежные работы', label:'Возможность параллельно', type:'select', source:'да; с ограничениями; нет'},
       {group:'Смежные работы', label:'Описание', type:'text', long:true, full:true},
-      {group:'Допуск', label:'Тип объекта', type:'select', source:'Обычное здание; ОПО; Завод'},
-      {group:'Допуск', label:'Схема договора', type:'select', source:'один (ИП поставка+монтаж); раздельно (ООО поставка + ИП монтаж)', full:true},
-      {group:'Допуск', label:'Электрика в нашем объёме', type:'toggle'},
-      {group:'Допуск', label:'Крепление к несущим', type:'toggle', note:'если да — узлы с нагрузками, согласование с собственником'},
-      {group:'Допуск', label:'Страхование на период работ', type:'select', source:'мы; заказчик; не предусмотрено'},
+      {group:'Допуск', label:'Объект относится к особой категории', type:'toggle', default:'Нет'},
+      {group:'Допуск', label:'Описание категории', type:'text', full:true, showIf:{key:'Объект относится к особой категории', in:['Да']}},
+      {group:'Допуск', label:'Электрика в нашем объёме', type:'toggle', default:'Нет'},
+      {group:'Допуск', label:'Крепление к несущим', type:'toggle', default:'Да', note:'если да — узлы с нагрузками, согласование с собственником'},
+      {group:'Допуск', label:'Страхование на период работ', type:'toggle', default:'Нет'},
+      {group:'Допуск', label:'Страхование — описание', type:'text', full:true, showIf:{key:'Страхование на период работ', in:['Да']}},
       {group:'Допуск', label:'Сертификат оформлен на', type:'select', source:'ООО; ИП'},
       {group:'Допуск', label:'Класс горючести / КМ запрошен', type:'toggle'},
     ]},
@@ -370,9 +422,9 @@
     { name:'Итоги', fields:[
       {label:'Общая площадь поверхности', type:'text', note:'м²'},
       {label:'Итоговая сумма', type:'text'},
-      {label:'Режим НДС', type:'select', source:'без НДС; 5% (ИП); 20%'},
+      {label:'Режим НДС', type:'text', readonly:true, note:'авто: ИП — 5%, ООО — 22%, иначе без НДС'},
       {label:'Срок действия цен', type:'text', note:'дней'},
-      {label:'Курс евро для матов', type:'text'},
+      {label:'Курс евро', type:'text'},
     ]},
 
     { name:'Этапы (календарный план)', repeating:true, item:'Этап', fields:[
@@ -453,25 +505,36 @@
         <div class="imgrow" data-imgrow="${k}"></div>
         <label class="upload-btn">＋ Загрузить<input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this,'${k}')"></label></div>`;
     }
+    const num=f.num?' data-num="1"':'';
     let control='';
     if(f.type==='text'){
-      control = f.long ? `<textarea data-key>${esc(dv)}</textarea>` : `<input type="text" data-key list="${dlId(f.label)}" value="${esc(dv)}">`;
+      const ro=f.readonly?' readonly':'';
+      control = f.long ? `<textarea data-key${ro}>${esc(dv)}</textarea>`
+        : (f.num ? `<input type="text" inputmode="numeric" data-key value="${esc(dv)}"${ro}>`
+        : f.readonly ? `<input type="text" data-key value="${esc(dv)}" readonly>`
+                 : `<input type="text" data-key list="${dlId(f.label)}" value="${esc(dv)}">`);
     } else if(f.type==='select'){
       const {list,opts}=optsFromSource(f.source);
       control = opts.length
         ? `<select data-key><option value=""></option>${opts.map(o=>`<option${o===dv?' selected':''}>${o}</option>`).join('')}</select>`
         : `<select data-key class="empty-list"><option value="">— варианты позже${list?` (список «${list}»)`:''} —</option></select>`;
     } else if(f.type==='multi'){
-      const {list,opts}=optsFromSource(f.source);
-      control = opts.length
-        ? `<div class="chips" data-key>${opts.map(o=>`<span class="chip" onclick="this.classList.toggle('on')">${o}</span>`).join('')}</div>`
-        : `<div class="chips" data-key><span class="note">— варианты позже${list?` (список «${list}»)`:''} —</span></div>`;
+      if(f.source && f.source.trim().indexOf('construct:')===0){
+        const cat=f.source.split(':')[1].trim();
+        control = `<div class="chips" data-key data-dynsource="${cat}"><span class="note">— заведите конструкции в разделе «Конструкции здания» —</span></div>`;
+      } else {
+        const {list,opts}=optsFromSource(f.source);
+        control = opts.length
+          ? `<div class="chips" data-key>${opts.map(o=>`<span class="chip" onclick="this.classList.toggle('on')">${o}</span>`).join('')}</div>`
+          : `<div class="chips" data-key><span class="note">— варианты позже${list?` (список «${list}»)`:''} —</span></div>`;
+      }
     } else if(f.type==='toggle'){
-      control=`<div class="toggle" data-key data-val="${dv}">
-        <button type="button" class="${dv==='Да'?'on':''}" onclick="setToggle(this,'Да')">Да</button>
-        <button type="button" class="${dv==='Нет'?'on':''}" onclick="setToggle(this,'Нет')">Нет</button></div>`;
+      const tv=f.default||'Нет';
+      control=`<div class="toggle" data-key data-val="${tv}">
+        <button type="button" class="${tv==='Да'?'on':''}" onclick="setToggle(this,'Да')">Да</button>
+        <button type="button" class="${tv==='Нет'?'on':''}" onclick="setToggle(this,'Нет')">Нет</button></div>`;
     }
-    return `<div class="${cls}" data-type="${f.type}" data-label="${f.label}"${grp}${showif}><label class="lbl">${f.label} ${note}</label>${control}</div>`;
+    return `<div class="${cls}" data-type="${f.type}" data-label="${f.label}"${grp}${showif}${num}><label class="lbl">${f.label} ${note}</label>${control}</div>`;
   }
 
   function fieldsGridHTML(fields){
@@ -512,7 +575,8 @@
     const body = b.repeat
       ? `<div class="rep-items"></div><button type="button" class="btn-add" onclick="addBlockItem(${si},${bi})">+ Добавить ${b.item.toLowerCase()}</button>`
       : fieldsGridHTML(b.fields);
-    return `<div class="block${b.service?' service':''}" data-secidx="${si}" data-blockidx="${bi}" data-default="${b.default||''}">
+    const showif=b.showIf?` data-showif='${JSON.stringify(b.showIf)}'`:'';
+    return `<div class="block${b.service?' service':''}" data-secidx="${si}" data-blockidx="${bi}" data-default="${b.default||''}"${showif}>
       <div class="block-head"><span class="block-title">${b.label}</span>
         <div class="toggle presence" data-val="">
           <button type="button" onclick="setPresence(this,'Да')">Да</button>
@@ -536,9 +600,10 @@
     const item=document.createElement('div');
     item.className='rep-item'; item.dataset.blockitem='1';
     item.innerHTML=`<div class="rep-item-head"><span class="tag">${b.item} ${n}</span>
-      <button type="button" class="btn-del" onclick="this.closest('.rep-item').remove()">×</button></div>${fieldsGridHTML(b.fields)}`;
+      <button type="button" class="btn-del" onclick="this.closest('.rep-item').remove();refreshDynChips()">×</button></div>${fieldsGridHTML(b.fields)}`;
     list.appendChild(item);
     applyShowIf(item);
+    refreshDynChips();
   }
 
   function addRepItem(idx){
@@ -551,10 +616,134 @@
       <button class="btn-del" onclick="this.closest('[data-repitem]').remove();renumberRep(${idx})">×</button></div>${fieldsGridHTML(sec.fields)}`;
     list.appendChild(item);
     applyShowIf(item);
+    refreshModuleLinks();
   }
   function renumberRep(idx){
     const sec=SECTIONS[idx];
     document.querySelectorAll(`[data-rep="${idx}"] > .module > .module-head .tag`).forEach((t,i)=>t.textContent=`${sec.item} ${i+1}`);
+    refreshModuleLinks();
+  }
+
+  /* ===== связка полей «все модули» (заморозка + исключения) ===== */
+  const linkedFields = new Set();           // ключи полей, замороженных по 1-му модулю
+  function modulesRoot(){ return document.querySelector('[data-rep]'); }
+  function fieldKeyOf(fld){ return (fld.dataset.group||'')+'|'+fld.dataset.label; }
+  function findFieldByKey(scope, key){ return [...scope.querySelectorAll('.field')].find(f=>fieldKeyOf(f)===key); }
+  function mkBtn(cls, label, handler){
+    const b=document.createElement('button'); b.type='button'; b.className=cls; b.textContent=label;
+    b.onclick=function(){ handler(this); }; return b;
+  }
+  function setFrozen(fld, on){
+    fld.classList.toggle('frozen', on);
+    fld.querySelectorAll('input,textarea').forEach(c=>{ c.readOnly=on; });
+  }
+  function toggleLink(btn){
+    const key=fieldKeyOf(btn.closest('.field'));
+    if(linkedFields.has(key)) linkedFields.delete(key); else linkedFields.add(key);
+    refreshModuleLinks();
+  }
+  function toggleException(btn){
+    const fld=btn.closest('.field');
+    fld.dataset.exception = fld.dataset.exception==='1' ? '' : '1';
+    refreshModuleLinks();
+  }
+  function propagateKey(list, key){
+    const modules=[...list.querySelectorAll(':scope > .module')];
+    if(modules.length<2) return;
+    const master=findFieldByKey(modules[0], key); if(!master) return;
+    const val=readField(master);
+    modules.slice(1).forEach(m=>{
+      const f=findFieldByKey(m, key);
+      if(f && f.dataset.exception!=='1') writeField(f, val);
+    });
+  }
+  function refreshModuleLinks(){
+    const list=modulesRoot(); if(!list) return;
+    const modules=[...list.querySelectorAll(':scope > .module')];
+    modules.forEach((m, mi)=>{
+      m.querySelectorAll('.field').forEach(fld=>{
+        const t=fld.dataset.type;
+        const lbl=fld.querySelector(':scope > .lbl'); if(!lbl) return;
+        lbl.querySelectorAll(':scope > .link-btn, :scope > .exc-btn').forEach(b=>b.remove());
+        setFrozen(fld, false);
+        if(t==='info'||t==='file') return;
+        if(modules.length<2){ fld.dataset.exception=''; return; }
+        const key=fieldKeyOf(fld), linked=linkedFields.has(key);
+        if(mi===0){
+          const b=mkBtn('link-btn'+(linked?' on':''), 'все модули', toggleLink);
+          b.title='Заморозить это поле во всех модулях по значению 1-го';
+          lbl.appendChild(b);
+        } else if(linked){
+          if(fld.dataset.exception==='1'){
+            lbl.appendChild(mkBtn('exc-btn on', '← вернуть к общему', toggleException));
+          } else {
+            setFrozen(fld, true);
+            lbl.appendChild(mkBtn('exc-btn', 'исключение', toggleException));
+          }
+        } else {
+          fld.dataset.exception='';
+        }
+      });
+    });
+    refreshDynChips();
+    linkedFields.forEach(key=>propagateKey(list, key));
+    applyShowIf(list);
+  }
+  function maybePropagate(target){
+    if(!target || !target.closest) return;
+    const fld=target.closest('.field'); if(!fld) return;
+    const module=fld.closest('.module'); if(!module) return;
+    const list=module.closest('[data-rep]'); if(!list) return;
+    const modules=[...list.querySelectorAll(':scope > .module')];
+    if(modules[0]!==module) return;            // только 1-й (мастер) модуль
+    const key=fieldKeyOf(fld);
+    if(linkedFields.has(key)){ propagateKey(list, key); applyShowIf(list); }
+  }
+
+  /* ===== динамический выбор конструкций здания на модуле ===== */
+  const CONSTRUCT_CATS = {
+    'стены':{title:'Стена', word:'Стена'},
+    'колонны':{title:'Колонны', word:'Колонна'},
+    'балки':{title:'Балки', word:'Балка'}
+  };
+  function getConstructInstances(cat){
+    const cfg=CONSTRUCT_CATS[cat]; if(!cfg) return [];
+    const sec=[...document.querySelectorAll('#form-root > .section')].find(s=>s.dataset.section==='Конструкции здания');
+    if(!sec) return [];
+    const block=[...sec.querySelectorAll('.block')].find(b=>{ const t=b.querySelector('.block-title'); return t && t.textContent.trim()===cfg.title; });
+    if(!block) return [];
+    return [...block.querySelectorAll('[data-blockitem]')].map((it,i)=>{
+      const f=it.querySelector('.field[data-label="Тип"]'); const tp=f?readField(f).trim():'';
+      return `${cfg.word} ${i+1}${tp?` — ${tp}`:''}`;
+    });
+  }
+  function refreshDynChips(){
+    document.querySelectorAll('.chips[data-dynsource]').forEach(box=>{
+      const opts=getConstructInstances(box.dataset.dynsource);
+      const sel=new Set([...box.querySelectorAll('.chip.on')].map(c=>c.textContent));
+      box.innerHTML = opts.length
+        ? opts.map(o=>`<span class="chip${sel.has(o)?' on':''}" onclick="this.classList.toggle('on')">${o}</span>`).join('')
+        : '<span class="note">— заведите конструкции в разделе «Конструкции здания» —</span>';
+    });
+  }
+
+  /* ===== авто-режим НДС по контрагенту ===== */
+  function recalcAuto(){
+    const cf=document.querySelector('.field[data-label="Контрагент (кто строит)"] [data-key]');
+    const c=cf?cf.value:'';
+    let vat='';
+    if(c.indexOf('ИП')===0) vat='5%';
+    else if(c.indexOf('ООО')===0) vat='22%';
+    else if(c) vat='без НДС';
+    document.querySelectorAll('.field[data-label="Режим НДС"] [data-key]').forEach(el=>{ el.value=vat; });
+  }
+  function writeField(el, value){
+    const t=el.dataset.type;
+    if(t==='text'){ const c=el.querySelector('[data-key]'); if(c) c.value=value||''; }
+    else if(t==='select'){ const c=el.querySelector('[data-key]'); if(c) c.value=value||''; }
+    else if(t==='multi'){ const arr=Array.isArray(value)?value:[]; el.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', arr.includes(c.textContent))); }
+    else if(t==='toggle'){ const w=el.querySelector('.toggle'); if(w){ w.dataset.val=value||''; [...w.querySelectorAll('button')].forEach(b=>b.classList.toggle('on', b.textContent===w.dataset.val)); } }
+    else if(t==='layers'){ const listEl=el.querySelector('.layer-list'); if(listEl){ listEl.innerHTML=''; (Array.isArray(value)?value:[]).forEach(row=>{ listEl.insertAdjacentHTML('beforeend', layerRowHTML()); const last=listEl.lastElementChild; last.querySelector('.layer-mat').value=row['Отделка']||''; last.querySelector('.layer-th').value=row['Толщина']||''; }); if(listEl.children.length===0) listEl.insertAdjacentHTML('beforeend', layerRowHTML()); } }
   }
 
   function setToggle(btn,val){
@@ -572,7 +761,7 @@
   function addLayer(btn){ btn.previousElementSibling.insertAdjacentHTML('beforeend', layerRowHTML()); }
 
   function applyShowIf(root){
-    root.querySelectorAll('.field[data-showif]').forEach(el=>{
+    root.querySelectorAll('.field[data-showif], .block[data-showif]').forEach(el=>{
       let cond; try{ cond=JSON.parse(el.dataset.showif); }catch(e){ return; }
       const container=el.closest('.rep-item, .module, .block-body, .section');
       let v='';
@@ -661,9 +850,14 @@
   /* ===== глобальные обработчики ===== */
   document.addEventListener('change', e=>{
     applyShowIf(document);
+    refreshDynChips();
+    recalcAuto();
+    maybePropagate(e.target);
     const fld=e.target.closest && e.target.closest('.field');
-    if(fld && fld.dataset.type==='text' && e.target.matches('input[type=text]')) recordHist(fld.dataset.label, e.target.value.trim());
+    if(fld && fld.dataset.type==='text' && !fld.dataset.num && e.target.matches('input[type=text]')) recordHist(fld.dataset.label, e.target.value.trim());
   });
+  document.addEventListener('input', e=>maybePropagate(e.target));
+  document.addEventListener('click', e=>maybePropagate(e.target));
   document.addEventListener('keydown', e=>{
     if(e.key==='Enter' && e.target.matches && e.target.matches('input[type=text]')){
       e.preventDefault();
@@ -687,6 +881,8 @@
   initBlocks();
   Object.keys(dlMap).forEach(refreshDatalist);
   applyShowIf(document);
+  refreshModuleLinks();
+  recalcAuto();
 </script>
 </body>
 </html>
