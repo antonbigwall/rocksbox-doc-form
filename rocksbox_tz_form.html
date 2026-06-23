@@ -15,6 +15,14 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;padding:28px 16px 130px;max-width:920px;margin:0 auto;font-size:16px;}
+  #toc{display:none;}
+  #toc-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-dim);padding:0 10px 8px;}
+  #toc a{display:block;padding:6px 10px;border-radius:6px;color:var(--ink-dim);text-decoration:none;cursor:pointer;margin-bottom:1px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #toc a:hover{background:var(--panel-2);color:var(--ink);}
+  #toc a.active{background:var(--accent-soft);color:#7a2e15;font-weight:600;}
+  @media(min-width:1340px){
+    #toc{display:block;position:fixed;top:0;left:0;width:calc((100vw - 920px)/2 - 14px);max-width:230px;height:100vh;overflow-y:auto;padding:20px 10px;background:var(--bg-deep);border-right:1px solid var(--line);z-index:50;}
+  }
   h1{font-size:27px;font-weight:700;margin-bottom:3px;}
   .sub{color:var(--ink-dim);font-size:14px;margin-bottom:18px;}
   .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
@@ -22,7 +30,12 @@
   .group-head{font-size:13px;font-weight:700;color:var(--ink);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px dashed var(--line);}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:620px){.grid{grid-template-columns:1fr;}}
-  .field{display:flex;flex-direction:column;gap:4px;}
+  .field{display:flex;flex-direction:column;gap:4px;position:relative;}
+  .pending-dot{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--line);background:transparent;cursor:pointer;opacity:.4;z-index:2;padding:0;}
+  .pending-dot:hover{opacity:1;border-color:#c2902f;}
+  .field.pending .pending-dot{background:#e0a83c;border-color:#c2902f;opacity:1;}
+  .field.pending{outline:1.5px dashed #d9a93f;outline-offset:3px;border-radius:3px;}
+  #toc a.has-pending::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#e0a83c;margin-left:6px;vertical-align:middle;}
   .field.full{grid-column:1/-1;}
   .field.service{background:var(--service);border-left:3px solid var(--service-line);padding:7px 9px;border-radius:6px;}
   label.lbl{font-size:13px;color:var(--ink-dim);font-weight:500;}
@@ -46,10 +59,10 @@
   .info-box{background:#fbf6e8;border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--ink);}
   .toggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:max-content;}
   .toggle button{border:none;background:var(--field);color:var(--ink-dim);font-size:14px;padding:8px 16px;cursor:pointer;font-family:var(--font);}
-  .toggle button.on{background:var(--accent);color:#fff;font-weight:600;}
+  .toggle button.on{background:var(--accent-soft);color:#7a2e15;font-weight:600;}
   .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
   .chip{font-size:13px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:var(--field);color:var(--ink-dim);cursor:pointer;user-select:none;}
-  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .chip.on{background:var(--accent-soft);color:#7a2e15;border-color:var(--accent);}
   .module{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
   .module-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .module-head .tag{font-size:14px;font-weight:700;color:#fff;background:var(--accent);padding:4px 14px;border-radius:20px;}
@@ -59,7 +72,7 @@
   .imgcard .rm{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .upload-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 13px;border:1.5px dashed var(--line);border-radius:7px;color:var(--ink-dim);cursor:pointer;background:var(--field);width:max-content;}
   button{font-family:var(--font);cursor:pointer;border:none;border-radius:7px;font-weight:600;font-size:15px;padding:10px 16px;}
-  button:hover{filter:brightness(1.05);}
+  button:hover{opacity:.92;}
   .btn-add{background:transparent;color:var(--ink-dim);border:1.5px dashed var(--line);width:100%;padding:12px;font-size:14px;}
   .btn-add:hover{background:var(--panel-2);}
   .btn-del{background:transparent;color:var(--ink-dim);font-size:20px;padding:0 8px;}
@@ -93,6 +106,7 @@
 </style>
 </head>
 <body>
+  <nav id="toc"><div id="toc-title">Разделы</div></nav>
   <h1>Карточка проекта Rocksbox</h1>
   <div class="sub">Источник правды для ТЗ и договора. Заполняешь один раз — документы собираются отсюда.</div>
   <div class="stage-banner">⚙️ <b>Стадия: структура.</b> Поля подсказывают ранее введённое (печатай — появятся подсказки), Enter — переход к следующему полю.</div>
@@ -103,6 +117,7 @@
   <div class="bar">
     <button class="btn-ghost" onclick="downloadProject()">💾 Сохранить проект</button>
     <label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer">📂 Открыть<input type="file" accept=".json" style="display:none" onchange="loadProject(this)"></label>
+    <button class="btn-ghost" onclick="clearPending()">○ Снять пометки</button>
     <button class="btn-primary" onclick="exportData()">Собрать для Claude</button>
   </div>
   <button class="btn-primary" id="copyBtn" style="display:none;margin-top:10px" onclick="copyOutput()">📋 Копировать</button>
@@ -366,7 +381,7 @@
       ]},
     ]},
 
-    { name:'Дополнительное оборудование', blocks:[
+    { name:'Доп. оборудование', blocks:[
       {label:'Оборудование', repeat:true, item:'позиция', default:'Нет', fields:[
         {label:'Наименование', type:'text'},
         {label:'Количество', type:'text'},
@@ -625,7 +640,7 @@
 
   function renderSection(sec, idx){
     const div=document.createElement('div');
-    div.className='section'; div.dataset.section=sec.name; div.dataset.secidx=idx;
+    div.className='section'; div.dataset.section=sec.name; div.dataset.secidx=idx; div.id='sec-'+idx;
     if(sec.repeating){
       div.innerHTML=`<h2>${sec.name}</h2><div class="rep-list" data-rep="${idx}"></div>
         <button class="btn-add" onclick="addRepItem(${idx})">+ Добавить ${sec.item.toLowerCase()}</button>`;
@@ -680,6 +695,7 @@
     applyShowIf(item);
     prefillFromHeader();
     item.querySelectorAll('.filler-list').forEach(relabelFiller);
+    addPendingDots(item);
   }
 
   function addRepItem(idx){
@@ -693,6 +709,7 @@
     list.appendChild(item);
     applyShowIf(item);
     refreshModuleLinks();
+    addPendingDots(item);
   }
   function renumberRep(idx){
     const sec=SECTIONS[idx];
@@ -1002,6 +1019,12 @@
         data[s.name]=collectFieldsContainer(sec);
       }
     });
+    const pend=[...document.querySelectorAll('.field.pending')].map(f=>{
+      const sec=f.closest('.section'), item=f.closest('[data-repitem],[data-blockitem]');
+      let ctx=''; if(item){ const tag=item.querySelector('.tag'); if(tag) ctx=' › '+tag.textContent.trim(); }
+      return (sec?sec.dataset.section:'')+ctx+' › '+fieldKey(f);
+    });
+    if(pend.length) data['_ожидается_от_заказчика']=pend;
     return data;
   }
 
@@ -1080,6 +1103,48 @@
   prefillFromHeader();
   refreshNotes();
   document.querySelectorAll('.filler-list').forEach(relabelFiller);
+  buildTOC();
+  addPendingDots(document);
+  refreshPendingMarks();
+
+  function addPendingDots(root){
+    (root||document).querySelectorAll('.field').forEach(f=>{
+      if(f.dataset.type==='info') return;
+      if(f.querySelector(':scope > .pending-dot')) return;
+      const d=document.createElement('span'); d.className='pending-dot'; d.title='Ждём от заказчика — отметить/снять';
+      d.onclick=()=>{ f.classList.toggle('pending'); refreshPendingMarks(); };
+      f.appendChild(d);
+    });
+  }
+  function refreshPendingMarks(){
+    document.querySelectorAll('#toc a').forEach(a=>{
+      const sec=document.getElementById(a.dataset.target);
+      a.classList.toggle('has-pending', !!(sec && sec.querySelector('.field.pending')));
+    });
+  }
+  function clearPending(){
+    const n=document.querySelectorAll('.field.pending').length;
+    document.querySelectorAll('.field.pending').forEach(f=>f.classList.remove('pending'));
+    refreshPendingMarks();
+    toast(n?`Снято пометок: ${n}`:'Пометок нет');
+  }
+
+  function buildTOC(){
+    const toc=document.getElementById('toc'); if(!toc) return;
+    const secs=[...document.querySelectorAll('#form-root > .section')];
+    toc.querySelectorAll('a').forEach(a=>a.remove());
+    secs.forEach(s=>{
+      const a=document.createElement('a'); a.textContent=s.dataset.section; a.dataset.target=s.id;
+      a.onclick=()=>{ const t=document.getElementById(s.id); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); };
+      toc.appendChild(a);
+    });
+    if('IntersectionObserver' in window){
+      const obs=new IntersectionObserver(ents=>{
+        ents.forEach(en=>{ if(en.isIntersecting){ toc.querySelectorAll('a').forEach(a=>a.classList.toggle('active', a.dataset.target===en.target.id)); } });
+      }, {rootMargin:'-12% 0px -80% 0px'});
+      secs.forEach(s=>obs.observe(s));
+    }
+  }
 </script>
 </body>
 </html>
