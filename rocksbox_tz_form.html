@@ -57,10 +57,10 @@
   .imgcard{position:relative;width:96px;}
   .imgcard img{width:96px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
   .imgcard .rm{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  .upload-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 13px;border:1.5px dashed var(--line);border-radius:7px;color:var(--accent);cursor:pointer;background:var(--field);width:max-content;}
+  .upload-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 13px;border:1.5px dashed var(--line);border-radius:7px;color:var(--ink-dim);cursor:pointer;background:var(--field);width:max-content;}
   button{font-family:var(--font);cursor:pointer;border:none;border-radius:7px;font-weight:600;font-size:15px;padding:10px 16px;}
   button:hover{filter:brightness(1.05);}
-  .btn-add{background:transparent;color:var(--accent);border:1.5px dashed var(--line);width:100%;padding:12px;font-size:14px;}
+  .btn-add{background:transparent;color:var(--ink-dim);border:1.5px dashed var(--line);width:100%;padding:12px;font-size:14px;}
   .btn-add:hover{background:var(--panel-2);}
   .btn-del{background:transparent;color:var(--ink-dim);font-size:20px;padding:0 8px;}
   .btn-del:hover{color:var(--accent);}
@@ -105,6 +105,7 @@
     <label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer">📂 Открыть<input type="file" accept=".json" style="display:none" onchange="loadProject(this)"></label>
     <button class="btn-primary" onclick="exportData()">Собрать для Claude</button>
   </div>
+  <button class="btn-primary" id="copyBtn" style="display:none;margin-top:10px" onclick="copyOutput()">📋 Копировать</button>
   <div class="out" id="output"></div>
   <div class="toast" id="toast">Готово</div>
   <div id="datalists" style="display:none"></div>
@@ -122,11 +123,13 @@
 
   const SECTIONS = [
     { name:'Проект', fields:[
+      {label:'Заказчик', type:'text', full:true},
+      {label:'Тип заказчика', type:'select', source:'Физлицо; Юрлицо'},
       {label:'Адрес объекта', type:'text', full:true},
       {label:'Название проекта', type:'text'},
       {label:'Номер договора', type:'text'},
       {label:'Год', type:'text', num:true},
-      {label:'Контрагент (кто строит)', type:'select', source:'ООО «Роксбокс»; ИП Гладышев Антон Александрович; Физлицо Гладышев Антон Александрович'},
+      {label:'Контрагент (кто строит)', type:'select', source:'ООО «Роксбокс»; ИП Гладышев Антон Александрович; Физлицо Гладышев Антон Александрович', note:'это исполнитель, не заказчик'},
       {label:'Контактное лицо заказчика', type:'text'},
       {label:'Email заказчика', type:'text'},
       {label:'Телефон заказчика', type:'text'},
@@ -252,23 +255,23 @@
       {group:'Соединители панелей', label:'Покраска соединителей', type:'toggle', default:'Нет', service:true, showIf:{key:'Типовой элемент', notIn:TYP_KT}},
       {group:'Соединители панелей', label:'Описание покраски', type:'text', note:'чатлы — грунт-эмаль; сшивки обычно не красим', showIf:{all:[{key:'Покраска соединителей', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}, service:true},
 
-      {group:'Примыкания панелей к зданию', label:'Соединительный элемент', type:'select', source:'Сшивка; Зазор', full:true},
-      {group:'Примыкания панелей к зданию', label:'Примык. стена', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Какие стены (примык.)', type:'multi', source:'construct: стены', full:true, showIf:{key:'Примык. стена', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (стена)', type:'text', showIf:{key:'Примык. стена', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Примык. колонны', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Какие колонны (примык.)', type:'multi', source:'construct: колонны', full:true, showIf:{key:'Примык. колонны', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (колонны)', type:'text', showIf:{key:'Примык. колонны', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Примык. пол', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (пол)', type:'text', showIf:{key:'Примык. пол', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Примык. потолок', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (потолок)', type:'text', showIf:{key:'Примык. потолок', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Примык. балки', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Какие балки (примык.)', type:'multi', source:'construct: балки', full:true, showIf:{key:'Примык. балки', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (балки)', type:'text', showIf:{key:'Примык. балки', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Примык. коммуникации', type:'toggle', default:'Нет'},
-      {group:'Примыкания панелей к зданию', label:'Какие коммуникации (примык.)', type:'multi', source:'construct: коммуникации', full:true, showIf:{key:'Примык. коммуникации', in:['Да']}},
-      {group:'Примыкания панелей к зданию', label:'Тип примыкания (коммуникации)', type:'text', showIf:{key:'Примык. коммуникации', in:['Да']}},
+      {group:'Примыкания панелей к зданию', label:'Соединительный элемент', type:'select', source:'Сшивка; Зазор', full:true, showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Примык. стена', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Какие стены (примык.)', type:'multi', source:'construct: стены', full:true, showIf:{all:[{key:'Примык. стена', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (стена)', type:'text', showIf:{all:[{key:'Примык. стена', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Примык. колонны', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Какие колонны (примык.)', type:'multi', source:'construct: колонны', full:true, showIf:{all:[{key:'Примык. колонны', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (колонны)', type:'text', showIf:{all:[{key:'Примык. колонны', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Примык. пол', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (пол)', type:'text', showIf:{all:[{key:'Примык. пол', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Примык. потолок', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (потолок)', type:'text', showIf:{all:[{key:'Примык. потолок', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Примык. балки', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Какие балки (примык.)', type:'multi', source:'construct: балки', full:true, showIf:{all:[{key:'Примык. балки', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (балки)', type:'text', showIf:{all:[{key:'Примык. балки', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Примык. коммуникации', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Примыкания панелей к зданию', label:'Какие коммуникации (примык.)', type:'multi', source:'construct: коммуникации', full:true, showIf:{all:[{key:'Примык. коммуникации', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Примыкания панелей к зданию', label:'Тип примыкания (коммуникации)', type:'text', showIf:{all:[{key:'Примык. коммуникации', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
 
       {group:'Коммуникации на участке', label:'Коммуникации открытые', type:'multi', source:'construct: коммуникации', full:true},
       {group:'Коммуникации на участке', label:'Коммуникации скрытые', type:'multi', source:'construct: коммуникации-скрытые', full:true},
@@ -312,6 +315,7 @@
       {label:'Синева древесины', type:'info', full:true, text:'На древесине хвойных пород возможно проявление синевы — естественного окрашивания заболони. Синева относится к грибным окраскам древесины (ГОСТ 8486-86) и, в отличие от гнили, не разрушает древесину и не снижает её прочность. Допускается в несущих и ограждающих конструкциях; носит исключительно эстетический характер.'},
       {label:'Вылаз наверх — нагрузка', type:'info', full:true, text:'Конструкции скалодрома, подразумевающие вылаз наверх, рассчитаны на нагрузку на верхнюю горизонтальную площадку не более 80 кг/м².'},
       {label:'Покраска на монтаже — запах', type:'info', full:true, text:'Покраска панелей скалодрома производится на монтаже. При покраске панелей используются лакокрасочные материалы, обладающие резким запахом, который может препятствовать проведению других видов работ, а также быть препятствием для соседей.'},
+      {label:'Скрытые коммуникации — отсутствуют', type:'info', full:true, text:'Скрытые инженерные коммуникации на участке отсутствуют. Стороны подтверждают, что в зоне монтажа скрытых коммуникаций нет; ответственность за возможные неучтённые скрытые коммуникации несёт заказчик.'},
     ], blocks:[
       {label:'Свои примечания', repeat:true, item:'примечание', default:'Да', fields:[
         {label:'Текст', type:'text', long:true, full:true},
@@ -380,12 +384,14 @@
     { name:'Разгрузка', fieldsFirst:true, fields:[
       {label:'Кто разгружает', type:'select', source:'Поставщик; Заказчик', default:'Поставщик'},
       {label:'Грузчики', type:'select', source:'Монтажники; Наёмные', showIf:{key:'Кто разгружает', in:['Поставщик']}},
-      {group:'Параметры', label:'Способ разгрузки', type:'text', full:true},
-      {group:'Параметры', label:'Путь разгрузки', type:'text'},
-      {group:'Параметры', label:'Этаж монтажа', type:'text'},
-      {group:'Параметры', label:'Размеры лифта (ДШВ, масса)', type:'text'},
+      {label:'Этаж монтажа', type:'text'},
       {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Нет'},
     ], blocks:[
+      {label:'Пути разгрузки', repeat:true, item:'путь', default:'Да', fields:[
+        {label:'Путь', type:'text', full:true, note:'напр. лестничный марш / лифт / кран через окно'},
+        {label:'Тип', type:'select', source:'Ручная; Механизированная'},
+        {label:'Минимальный размер проёма на пути', type:'text'},
+      ]},
       {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', showIf:{key:'Подъёмные механизмы', in:['Да']}, fields:[
         {label:'Тип', type:'select', source:'Манипулятор; Подъёмный кран; Рохля; Вилочный погрузчик'},
         {label:'Количество', type:'text'},
@@ -405,7 +411,7 @@
       {group:'Что монтируем', label:'Чехлы матов — частично', type:'text', showIf:{key:'Чехлы матов', in:['Частично']}},
       {group:'Что монтируем', label:'Зацепки', type:'select', source:'Да; Нет; Частично', default:'Да'},
       {group:'Что монтируем', label:'Зацепки — частично', type:'text', showIf:{key:'Зацепки', in:['Частично']}},
-      {group:'Накрутка', label:'Способ накрутки', type:'select', source:'По цветам, техническая; По цветам, routesetting; По цветам, лестницей; Вразнобой'},
+      {group:'Накрутка', label:'Способ накрутки', type:'select', source:'По цветам, техническая; По цветам, routesetting; По цветам, лестницей; Вразнобой', showIf:{key:'Зацепки', in:['Да','Частично']}},
       {group:'Подъёмные механизмы', label:'Подъёмные механизмы', type:'toggle', default:'Да'},
     ], blocks:[
       {label:'Подъёмные механизмы (перечень)', repeat:true, item:'механизм', showIf:{key:'Подъёмные механизмы', in:['Да']}, fields:[
@@ -416,12 +422,15 @@
     ]},
 
     { name:'Организация работ', fields:[
-      {group:'Производимые виды работ', label:'Работы на высоте', type:'toggle', default:'Нет'},
-      {group:'Производимые виды работ', label:'Огневые работы', type:'toggle', default:'Нет', note:'сварка = огневые, наряд один'},
-      {group:'Производимые виды работ', label:'Электроустановки', type:'toggle', default:'Нет'},
-      {group:'Инструктаж', label:'Периодичность', type:'text', full:true, default:'единоразово перед началом работ'},
+      {group:'Допуски', label:'Получение допусков', type:'toggle', default:'Нет'},
+      {group:'Производимые виды работ', label:'Работы на высоте', type:'toggle', default:'Нет', showIf:{key:'Получение допусков', in:['Да']}},
+      {group:'Производимые виды работ', label:'Огневые работы', type:'toggle', default:'Нет', note:'сварка = огневые, наряд один', showIf:{key:'Получение допусков', in:['Да']}},
+      {group:'Производимые виды работ', label:'Электроустановки', type:'toggle', default:'Нет', showIf:{key:'Получение допусков', in:['Да']}},
+      {group:'Инструктаж', label:'Инструктаж', type:'toggle', default:'Нет', showIf:{key:'Получение допусков', in:['Да']}},
+      {group:'Инструктаж', label:'Периодичность', type:'text', full:true, default:'единоразово перед началом работ', showIf:{all:[{key:'Получение допусков', in:['Да']},{key:'Инструктаж', in:['Да']}]}},
       {group:'Площадка', label:'Электричество', type:'text', note:'220В, мощность, отдельная линия 16А', full:true},
       {group:'Площадка', label:'Освещение', type:'text', note:'лк'},
+      {group:'Площадка', label:'Электричество/освещение — кто предоставляет', type:'select', source:'Подрядчик; Поставщик'},
       {group:'Площадка', label:'Демонтаж в местах примыкания', type:'toggle', default:'Нет'},
       {group:'Площадка', label:'Демонтаж — описание', type:'text', full:true, showIf:{key:'Демонтаж в местах примыкания', in:['Да']}},
       {group:'Мусор и уборка', label:'Вывоз мусора', type:'select', source:'Подрядчик; Заказчик'},
@@ -655,6 +664,7 @@
     const show = wrap.dataset.val==='Да';
     body.style.display=show?'block':'none';
     if(show){ const rep=body.querySelector('.rep-items'); if(rep && rep.children.length===0) addBlockItem(+block.dataset.secidx,+block.dataset.blockidx); }
+    refreshNotes();
   }
   function addBlockItem(si,bi){
     const b=SECTIONS[si].blocks[bi];
@@ -851,9 +861,12 @@
       const cov=cf?readField(cf):[];
       return wf && readField(wf)==='На монтаже' && Array.isArray(cov) && cov.includes('Лак ПУ на растворителе');
     });
+    const hiddenBlock=[...document.querySelectorAll('.block')].find(b=>{const t=b.querySelector('.block-title');return t&&t.textContent.trim()==='Коммуникации скрытые';});
+    const hiddenAbsent=!!(hiddenBlock && hiddenBlock.querySelector('.presence') && hiddenBlock.querySelector('.presence').dataset.val==='Нет');
     toggleNote('Синева древесины', wood);
     toggleNote('Вылаз наверх — нагрузка', climb);
     toggleNote('Покраска на монтаже — запах', solvent);
+    toggleNote('Скрытые коммуникации — отсутствуют', hiddenAbsent);
   }
   function writeField(el, value){
     const t=el.dataset.type;
@@ -995,9 +1008,17 @@
   function exportData(){
     const out=document.getElementById('output');
     out.textContent=JSON.stringify(buildData(),null,2);
-    out.classList.add('show'); out.scrollIntoView({behavior:'smooth',block:'nearest'});
-    if(navigator.clipboard) navigator.clipboard.writeText(out.textContent).then(()=>toast('Скопировано')).catch(()=>{});
+    out.classList.add('show');
+    const btn=document.getElementById('copyBtn'); if(btn) btn.style.display='';
+    out.scrollIntoView({behavior:'smooth',block:'nearest'});
+    copyOutput();
   }
+  function copyOutput(){
+    const out=document.getElementById('output');
+    if(navigator.clipboard) navigator.clipboard.writeText(out.textContent).then(()=>toast('Скопировано')).catch(()=>selectOutput(out));
+    else selectOutput(out);
+  }
+  function selectOutput(out){ const r=document.createRange(); r.selectNodeContents(out); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Выдели и Ctrl+C'); }
   function downloadProject(){
     const full={ data:buildData(), _images:imgStore };
     const name=(buildData()['Проект']||{})['Название проекта']||'проект';
