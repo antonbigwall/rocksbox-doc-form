@@ -18,7 +18,7 @@
   h1{font-size:27px;font-weight:700;margin-bottom:3px;}
   .sub{color:var(--ink-dim);font-size:14px;margin-bottom:18px;}
   .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-  .section>h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:700;margin-bottom:14px;}
+  .section>h2{font-size:17px;letter-spacing:.02em;color:#fff;background:var(--accent);font-weight:700;margin:-20px -20px 16px;padding:11px 20px;border-radius:var(--radius) var(--radius) 0 0;}
   .group-head{font-size:13px;font-weight:700;color:var(--ink);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px dashed var(--line);}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:620px){.grid{grid-template-columns:1fr;}}
@@ -52,7 +52,7 @@
   .chip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
   .module{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
   .module-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-  .module-head .tag{font-size:13px;font-weight:700;color:#fff;background:var(--accent);padding:3px 12px;border-radius:20px;}
+  .module-head .tag{font-size:14px;font-weight:700;color:#fff;background:var(--accent);padding:4px 14px;border-radius:20px;}
   .imgrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
   .imgcard{position:relative;width:96px;}
   .imgcard img{width:96px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
@@ -70,6 +70,11 @@
   .block-title{font-weight:700;font-size:15px;}
   .block-body{padding:14px;border-top:1px solid var(--line);}
   .layer-item{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+  .filler-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;flex-wrap:wrap;}
+  .filler-row .filler-name{min-width:84px;font-size:12px;font-weight:700;color:var(--accent);}
+  .filler-row select,.filler-row input{padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--field);font-family:var(--font);font-size:14px;}
+  .filler-row .fl-mark{flex:1;min-width:90px;}
+  .filler-row .fl-dens,.filler-row .fl-th{width:120px;}
   .layer-add{width:max-content;padding:6px 12px;font-size:13px;margin-top:2px;}
   .rep-item{border:1px dashed var(--line);border-radius:7px;padding:12px;margin-bottom:10px;}
   .rep-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
@@ -113,6 +118,7 @@
     'типовой_элемент':['Kilterboard 16x12','Kilterboard 12x12','Tensionboard 12x12','Moonboard 25','Moonboard 40']
   };
   const ДаНет='Да; Нет';
+  const TYP_KT=['Kilterboard 16x12','Kilterboard 12x12','Tensionboard 12x12'];  // упрощённый режim
 
   const SECTIONS = [
     { name:'Проект', fields:[
@@ -180,14 +186,17 @@
       {label:'Высота', type:'text', note:'м', num:true},
       {label:'Протяжённость / ширина', type:'text', note:'м', num:true},
       {label:'Страховка', type:'multi', source:'Верхняя; Нижняя; Автоматическая', full:true, showIf:{key:'Тип модуля', in:['Трудность']}},
-      {label:'Геометрия плоскостей', type:'multi', source:'Положилово; Вертикаль; Слабые нависания; Средние нависания; Большие нависания; Потолок', full:true},
-      {label:'Назначение', type:'multi', source:'Соревновательный; Детский; Новички; Любители; Тренировочный; Коммерческий', full:true},
-      {label:'Вылаз наверх', type:'toggle', default:'Нет'},
+      {label:'Геометрия плоскостей', type:'multi', source:'Положилово; Вертикаль; Слабые нависания; Средние нависания; Большие нависания; Потолок', full:true, showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {label:'Высота кикборда', type:'text', note:'мм', showIf:{key:'Типовой элемент', in:TYP_KT}},
+      {label:'Угол наклона от', type:'text', note:'°', showIf:{key:'Типовой элемент', in:TYP_KT}},
+      {label:'Угол наклона до', type:'text', note:'°', showIf:{key:'Типовой элемент', in:TYP_KT}},
+      {label:'Назначение', type:'multi', source:'Соревновательный; Детский; Новички; Любители; Тренировочный; Коммерческий; Обучение', full:true, showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {label:'Вылаз наверх', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
 
       {group:'Каркас', label:'Тип каркаса', type:'select', source:'Деревянный; Стальной; Клиновые леса'},
       {group:'Каркас', label:'Покраска каркаса', type:'toggle', default:'Да'},
-      {group:'Каркас', label:'Тип покраски (сталь)', type:'select', source:'Грунт-эмаль; Порошковая', default:'Грунт-эмаль', service:true, showIf:{all:[{key:'Покраска каркаса', in:['Да']},{key:'Тип каркаса', in:['Стальной']}]}},
-      {group:'Каркас', label:'Тип покраски (дерево)', type:'select', source:'Антисептик; Фумигация для экспорта; Грунт-эмаль', default:'Грунт-эмаль', service:true, showIf:{all:[{key:'Покраска каркаса', in:['Да']},{key:'Тип каркаса', in:['Деревянный']}]}},
+      {group:'Каркас', label:'Тип покраски (сталь)', type:'select', source:'Грунт-эмаль; Порошковая', default:'Грунт-эмаль', showIf:{all:[{key:'Покраска каркаса', in:['Да']},{key:'Тип каркаса', in:['Стальной']}]}},
+      {group:'Каркас', label:'Тип покраски (дерево)', type:'select', source:'Антисептик; Фумигация для экспорта; Грунт-эмаль', default:'Грунт-эмаль', showIf:{all:[{key:'Покраска каркаса', in:['Да']},{key:'Тип каркаса', in:['Деревянный']}]}},
       {group:'Каркас', label:'Крыша / козырёк', type:'toggle', default:'Нет', showIf:{key:'Расположение', in:['Улица']}},
       {group:'Каркас', label:'Крыша / козырёк — описание', type:'text', showIf:{key:'Крыша / козырёк', in:['Да']}},
 
@@ -205,15 +214,15 @@
       {group:'Крепление каркаса к зданию', label:'Какие балки', type:'multi', source:'construct: балки', full:true, showIf:{key:'к балкам', in:['Да']}},
       {group:'Крепление каркаса к зданию', label:'Способ (балки)', type:'text', showIf:{key:'к балкам', in:['Да']}},
 
-      {group:'Тяги', label:'Тип крепёжного элемента', type:'select', source:'Тяги регулируемые; Тяги из перф. уголка с проставкой; Фанерные рёбра+сшивки'},
+      {group:'Тяги', label:'Тип крепёжного элемента', type:'select', source:'Тяги регулируемые; Тяги из перф. уголка с проставкой; Фанерные рёбра+сшивки', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
 
       {group:'Поверхность', label:'Материал панелей', type:'select', source:'Фанера ФК; Фанера ФСФ; HPL; Стеклопластик'},
-      {group:'Поверхность', label:'Обработка кромок панелей', type:'select', source:'Нет; Скругления R2,5мм'},
-      {group:'Поверхность · Фанера', label:'Формат', type:'select', source:'1525х1525; 1525х3050; 1500х3000; 1220х2440; 1250х2500', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
-      {group:'Поверхность · Фанера', label:'Толщина фанеры', type:'select', source:'15мм; 18мм; 21мм', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
+      {group:'Поверхность', label:'Обработка кромок панелей', type:'select', source:'Нет; Скругления R2,5мм', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ','HPL']}},
+      {group:'Поверхность · Фанера', label:'Формат', type:'select', source:'1525х1525; 1525х3050; 1500х3000; 1220х2440; 1250х2500', showIf:{all:[{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Поверхность · Фанера', label:'Толщина фанеры', type:'select', source:'15мм; 18мм; 21мм', showIf:{all:[{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']},{key:'Типовой элемент', notIn:TYP_KT}]}},
       {group:'Поверхность · Фанера', label:'Покрытие', type:'multi', source:'Лак ПУ на водной основе; Лак ПУ на растворителе; Морилка; Шпон; Краска; Фрикционное', full:true, showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
       {group:'Поверхность · Фанера', label:'Где покраска', type:'select', source:'На производстве; На монтаже', default:'На производстве', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
-      {group:'Поверхность · Фанера', label:'Цвет', type:'text', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
+      {group:'Поверхность · Фанера', label:'Цвет', type:'text', showIf:{all:[{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']},{key:'Покрытие', in:['Морилка','Шпон','Краска','Фрикционное']}]}},
       {group:'Поверхность · Фанера', label:'Покрытие задника', type:'toggle', default:'Нет', showIf:{key:'Материал панелей', in:['Фанера ФК','Фанера ФСФ']}},
       {group:'Поверхность · Фанера', label:'Описание задника', type:'text', showIf:{key:'Покрытие задника', in:['Да']}},
       {group:'Поверхность · HPL', label:'Формат HPL', type:'select', source:'1300х3050', showIf:{key:'Материал панелей', in:['HPL']}},
@@ -228,21 +237,22 @@
       {group:'Поверхность', label:'J-профиль', type:'toggle', default:'Нет', showIf:{key:'Тип модуля', in:['Трудность']}},
       {group:'Поверхность', label:'J-профиль — описание', type:'text', showIf:{key:'J-профиль', in:['Да']}},
 
-      {group:'Отверстия и крепёж панелей', label:'Отверстия для зацепок', type:'toggle', default:'Да'},
+      {group:'Отверстия и крепёж панелей', label:'Отверстия для зацепок', type:'toggle', default:'Да', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
       {group:'Отверстия и крепёж панелей', label:'Закладные гайки', type:'select', source:'С шипами; На саморезах; Нет'},
-      {group:'Отверстия и крепёж панелей', label:'Сетка отверстий', type:'text'},
-      {group:'Отверстия и крепёж панелей', label:'Диаметр отверстий', type:'text', default:'М10'},
-      {group:'Отверстия и крепёж панелей', label:'Отверстия для крепления к каркасу', type:'toggle', default:'Нет'},
-      {group:'Отверстия и крепёж панелей', label:'Описание (крепление к каркасу)', type:'text', showIf:{key:'Отверстия для крепления к каркасу', in:['Да']}},
-      {group:'Отверстия и крепёж панелей', label:'Люк доступа', type:'toggle', default:'Нет'},
-      {group:'Отверстия и крепёж панелей', label:'Юбка', type:'toggle', default:'Нет', note:'подробно — в разделе Маты'},
-      {group:'Отверстия и крепёж панелей', label:'Описание юбки', type:'text', showIf:{key:'Юбка', in:['Да']}},
+      {group:'Отверстия и крепёж панелей', label:'Сетка отверстий', type:'text', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Отверстия и крепёж панелей', label:'Диаметр отверстий', type:'text', default:'М10', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Отверстия и крепёж панелей', label:'Отверстия для крепления к каркасу', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Отверстия и крепёж панелей', label:'Описание (крепление к каркасу)', type:'text', showIf:{all:[{key:'Отверстия для крепления к каркасу', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Отверстия и крепёж панелей', label:'Люк доступа', type:'toggle', default:'Нет', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Отверстия и крепёж панелей', label:'Юбка', type:'toggle', default:'Нет', note:'подробно — в разделе Маты', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Отверстия и крепёж панелей', label:'Описание юбки', type:'text', showIf:{all:[{key:'Юбка', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}},
 
-      {group:'Соединители панелей', label:'Тип соединителя', type:'select', source:'Сшивки; Чатлы'},
-      {group:'Соединители панелей', label:'Толщина сшивки', type:'text', showIf:{key:'Тип соединителя', in:['Сшивки']}},
-      {group:'Соединители панелей', label:'Покраска соединителей', type:'toggle', default:'Нет', service:true},
-      {group:'Соединители панелей', label:'Описание покраски', type:'text', note:'чатлы — грунт-эмаль; сшивки обычно не красим', showIf:{key:'Покраска соединителей', in:['Да']}, service:true},
+      {group:'Соединители панелей', label:'Тип соединителя', type:'select', source:'Сшивки; Чатлы', showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Соединители панелей', label:'Толщина сшивки', type:'text', showIf:{all:[{key:'Тип соединителя', in:['Сшивки']},{key:'Типовой элемент', notIn:TYP_KT}]}},
+      {group:'Соединители панелей', label:'Покраска соединителей', type:'toggle', default:'Нет', service:true, showIf:{key:'Типовой элемент', notIn:TYP_KT}},
+      {group:'Соединители панелей', label:'Описание покраски', type:'text', note:'чатлы — грунт-эмаль; сшивки обычно не красим', showIf:{all:[{key:'Покраска соединителей', in:['Да']},{key:'Типовой элемент', notIn:TYP_KT}]}, service:true},
 
+      {group:'Примыкания панелей к зданию', label:'Соединительный элемент', type:'select', source:'Сшивка; Зазор', full:true},
       {group:'Примыкания панелей к зданию', label:'Примык. стена', type:'toggle', default:'Нет'},
       {group:'Примыкания панелей к зданию', label:'Какие стены (примык.)', type:'multi', source:'construct: стены', full:true, showIf:{key:'Примык. стена', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Тип примыкания (стена)', type:'text', showIf:{key:'Примык. стена', in:['Да']}},
@@ -260,8 +270,8 @@
       {group:'Примыкания панелей к зданию', label:'Какие коммуникации (примык.)', type:'multi', source:'construct: коммуникации', full:true, showIf:{key:'Примык. коммуникации', in:['Да']}},
       {group:'Примыкания панелей к зданию', label:'Тип примыкания (коммуникации)', type:'text', showIf:{key:'Примык. коммуникации', in:['Да']}},
 
-      {group:'Коммуникации на участке', label:'Коммуникации открытые', type:'text'},
-      {group:'Коммуникации на участке', label:'Коммуникации скрытые', type:'text'},
+      {group:'Коммуникации на участке', label:'Коммуникации открытые', type:'multi', source:'construct: коммуникации', full:true},
+      {group:'Коммуникации на участке', label:'Коммуникации скрытые', type:'multi', source:'construct: коммуникации-скрытые', full:true},
       {label:'Рисунки модуля', type:'file', full:true},
     ]},
 
@@ -276,44 +286,36 @@
       {label:'Маты', repeat:true, item:'тип матов', default:'Нет', fields:[
         {label:'Высота', type:'text', note:'мм'},
 
+        {label:'Наполнитель (вводить сверху вниз)', type:'filler', full:true},
+
         {group:'Покрытие', label:'Ткань покрытия', type:'select', source:'ПВХ; Ковролин армированный; Кордура', full:true},
         {group:'Покрытие · ПВХ', label:'Плотность', type:'text', showIf:{key:'Ткань покрытия', in:['ПВХ']}},
         {group:'Покрытие · ПВХ', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['ПВХ']}},
         {group:'Покрытие · Ковролин', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['Ковролин армированный']}},
         {group:'Покрытие · Кордура', label:'Плотность', type:'text', showIf:{key:'Ткань покрытия', in:['Кордура']}},
         {group:'Покрытие · Кордура', label:'Цвет', type:'text', showIf:{key:'Ткань покрытия', in:['Кордура']}},
+        {group:'Покрытие', label:'Конструкция', type:'select', source:'Полотно+накладки на углы; Отдельные чехлы; Чехол-рамка+Чехол колпак; Чехол-колпак; Модульная из полотен', full:true},
+        {group:'Покрытие', label:'Полосы-соединители на стыки', type:'toggle', default:'Нет'},
+        {group:'Покрытие', label:'Материал полос', type:'text', note:'по умолчанию — из материала чехла', showIf:{key:'Полосы-соединители на стыки', in:['Да']}},
+        {group:'Покрытие', label:'Цвет полос', type:'text', note:'по умолчанию — из цвета чехла', showIf:{key:'Полосы-соединители на стыки', in:['Да']}},
 
-        {group:'Наполнитель · Верхний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
-        {group:'Наполнитель · Верхний слой', label:'Марка наполнителя', type:'text'},
-        {group:'Наполнитель · Верхний слой', label:'Плотность наполнителя', type:'text'},
-        {group:'Наполнитель · Верхний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
-
-        {group:'Наполнитель · Средний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
-        {group:'Наполнитель · Средний слой', label:'Марка наполнителя', type:'text'},
-        {group:'Наполнитель · Средний слой', label:'Плотность наполнителя', type:'text'},
-        {group:'Наполнитель · Средний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
-
-        {group:'Наполнитель · Нижний слой', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
-        {group:'Наполнитель · Нижний слой', label:'Марка наполнителя', type:'text'},
-        {group:'Наполнитель · Нижний слой', label:'Плотность наполнителя', type:'text'},
-        {group:'Наполнитель · Нижний слой', label:'Толщина слоя', type:'text', note:'мм', num:true},
-
-        {group:'Наполнитель · Боковые части', label:'Тип наполнителя', type:'select', source:'Поролон; Изолон; Холлофайбер'},
-        {group:'Наполнитель · Боковые части', label:'Марка наполнителя', type:'text'},
-        {group:'Наполнитель · Боковые части', label:'Плотность наполнителя', type:'text'},
-        {group:'Наполнитель · Боковые части', label:'Толщина слоя', type:'text', note:'мм', num:true},
-
-        {group:'Примыкания', label:'К скалодрому', type:'text', full:true},
-        {group:'Примыкания', label:'Открытые части', type:'text', full:true},
+        {group:'Примыкания · К скалодрому', label:'Тип примыкания', type:'select', source:'Вплотную к нижним панелям; Заходит под скалодром', full:true},
+        {group:'Примыкания · К скалодрому', label:'Крепёжный элемент', type:'text', default:'фанерные планки'},
+        {group:'Примыкания · К скалодрому', label:'Крепление крепёжного элемента', type:'select', source:'К полу; К лежню; К юбке'},
+        {group:'Примыкания · Открытые части', label:'Крепёжный элемент', type:'text', default:'фанерные планки'},
+        {group:'Примыкания · Открытые части', label:'Крепление крепёжного элемента', type:'select', source:'К полу; К стенам'},
       ]},
     ]},
 
-    { name:'Примечания', fields:[
+    { name:'Примечания', fieldsFirst:true, fields:[
       {label:'Противопожарная обработка', type:'info', full:true, text:'На поставляемые материалы предоставляется пожарный сертификат. Противопожарная обработка с лицензией МЧС: не производится.'},
       {label:'Синева древесины', type:'info', full:true, text:'На древесине хвойных пород возможно проявление синевы — естественного окрашивания заболони. Синева относится к грибным окраскам древесины (ГОСТ 8486-86) и, в отличие от гнили, не разрушает древесину и не снижает её прочность. Допускается в несущих и ограждающих конструкциях; носит исключительно эстетический характер.'},
       {label:'Вылаз наверх — нагрузка', type:'info', full:true, text:'Конструкции скалодрома, подразумевающие вылаз наверх, рассчитаны на нагрузку на верхнюю горизонтальную площадку не более 80 кг/м².'},
       {label:'Покраска на монтаже — запах', type:'info', full:true, text:'Покраска панелей скалодрома производится на монтаже. При покраске панелей используются лакокрасочные материалы, обладающие резким запахом, который может препятствовать проведению других видов работ, а также быть препятствием для соседей.'},
-      {label:'Примечания', type:'text', long:true, full:true},
+    ], blocks:[
+      {label:'Свои примечания', repeat:true, item:'примечание', default:'Да', fields:[
+        {label:'Текст', type:'text', long:true, full:true},
+      ]},
     ]},
 
     { name:'Зацепки и Рельефы', blocks:[
@@ -329,9 +331,23 @@
       ]},
       {label:'Рельефы стеклопластиковые (Макросы)', default:'Нет', fields:[
         {label:'Количество и цвет', type:'text', full:true},
+        {label:'Комплектуется крепежом', type:'toggle', default:'Да'},
       ]},
-      {label:'Рельефы (прочие — уточнить)', default:'Нет', fields:[
+      {label:'Рельефы на основе фанеры', default:'Нет', fields:[
         {label:'Количество и цвет', type:'text', full:true},
+        {label:'Комплектуется крепежом', type:'toggle', default:'Да'},
+      ]},
+      {label:'Специальные', default:'Нет', fields:[
+        {label:'Наименование', type:'text', full:true},
+        {label:'Количество', type:'text'},
+        {label:'Цвет', type:'text'},
+        {label:'Комплектуется крепежом', type:'toggle', default:'Да'},
+      ]},
+    ]},
+
+    { name:'Электроника', blocks:[
+      {label:'Электроника', default:'Нет', fields:[
+        {label:'Описание', type:'text', long:true, full:true},
       ]},
     ]},
 
@@ -541,6 +557,12 @@
         <div class="layer-list">${layerRowHTML()}</div>
         <button type="button" class="btn-add layer-add" onclick="addLayer(this)">＋ добавить слой отделки</button></div>`;
     }
+    if(f.type==='filler'){
+      return `<div class="field full" data-type="filler" data-label="${f.label}"${grp}${showif}>
+        <label class="lbl">${f.label||'Наполнитель'}</label>
+        <div class="filler-list">${fillerRowHTML()}</div>
+        <button type="button" class="btn-add layer-add" onclick="addFiller(this)">＋ добавить слой</button></div>`;
+    }
     if(f.type==='file'){
       const k='img'+(imgSeq++); imgStore[k]=[];
       return `<div class="field full" data-type="file" data-label="${f.label}" data-imgkey="${k}"><label class="lbl">${f.label} ${note}</label>
@@ -644,9 +666,10 @@
     item.innerHTML=`<div class="rep-item-head"><span class="tag">${b.item} ${n}</span>
       <button type="button" class="btn-del" onclick="this.closest('.rep-item').remove();refreshDynChips()">×</button></div>${fieldsGridHTML(b.fields)}`;
     list.appendChild(item);
-    applyShowIf(item);
     refreshDynChips();
+    applyShowIf(item);
     prefillFromHeader();
+    item.querySelectorAll('.filler-list').forEach(relabelFiller);
   }
 
   function addRepItem(idx){
@@ -748,7 +771,8 @@
     'стены':{title:'Стена', word:'Стена'},
     'колонны':{title:'Колонны', word:'Колонна'},
     'балки':{title:'Балки', word:'Балка'},
-    'коммуникации':{title:'Коммуникации открытые', word:'Коммуникация'}
+    'коммуникации':{title:'Коммуникации открытые', word:'Коммуникация'},
+    'коммуникации-скрытые':{title:'Коммуникации скрытые', word:'Скрытая комм.', field:'Описание'}
   };
   function getConstructInstances(cat){
     const cfg=CONSTRUCT_CATS[cat]; if(!cfg) return [];
@@ -757,7 +781,7 @@
     const block=[...sec.querySelectorAll('.block')].find(b=>{ const t=b.querySelector('.block-title'); return t && t.textContent.trim()===cfg.title; });
     if(!block) return [];
     return [...block.querySelectorAll('[data-blockitem]')].map((it,i)=>{
-      const f=it.querySelector('.field[data-label="Тип"]'); const tp=f?readField(f).trim():'';
+      const f=it.querySelector(`.field[data-label="${cfg.field||'Тип'}"]`); const tp=f?readField(f).trim():'';
       return `${cfg.word} ${i+1}${tp?` — ${tp}`:''}`;
     });
   }
@@ -767,7 +791,7 @@
       const sel=new Set([...box.querySelectorAll('.chip.on')].map(c=>c.textContent));
       box.innerHTML = opts.length
         ? opts.map(o=>`<span class="chip${sel.has(o)?' on':''}" onclick="this.classList.toggle('on')">${o}</span>`).join('')
-        : '<span class="note">— заведите конструкции в разделе «Конструкции здания» —</span>';
+        : '<span class="note">— заведите в разделе «Конструкции здания» —</span>';
     });
   }
 
@@ -787,6 +811,33 @@
     const addr=headerValue('Адрес объекта'), year=headerValue('Год');
     document.querySelectorAll('.field[data-label="Адрес установки"] [data-key]').forEach(el=>{ if(!el.value) el.value=addr; });
     document.querySelectorAll('.field[data-label="Год установки"] [data-key]').forEach(el=>{ if(!el.value) el.value=year; });
+  }
+  /* ===== типовые элементы Kilterboard/Tensionboard: режим и предзаполнение ===== */
+  function typicalAdjust(){
+    document.querySelectorAll('.module').forEach(mod=>{
+      const tmF=mod.querySelector('.field[data-label="Тип модуля"]'); if(!tmF) return;
+      const teEl=mod.querySelector('.field[data-label="Типовой элемент"] [data-key]');
+      if(readField(tmF)!=='Типовой элемент'){ if(teEl) teEl.value=''; return; }   // сбросить устаревшее
+      if(teEl && TYP_KT.includes(teEl.value)){
+        const k=mod.querySelector('.field[data-label="Тип каркаса"] [data-key]');
+        if(k && !k.value) k.value='Стальной';                                      // каркас по умолчанию
+      }
+    });
+  }
+  /* ===== полосы-соединители матов: материал/цвет по умолчанию из чехла ===== */
+  function prefillStrips(){
+    const matMap={'ПВХ':'ПВХ','Кордура':'Кордура','Ковролин армированный':'Техническая ткань'};
+    document.querySelectorAll('[data-blockitem]').forEach(mat=>{
+      const tf=mat.querySelector('.field[data-label="Ткань покрытия"]'); if(!tf) return;
+      const tkan=readField(tf);
+      const mEl=mat.querySelector('.field[data-label="Материал полос"] [data-key]');
+      if(mEl && !mEl.value && matMap[tkan]) mEl.value=matMap[tkan];
+      const cEl=mat.querySelector('.field[data-label="Цвет полос"] [data-key]');
+      if(cEl && !cEl.value){
+        const cov=[...mat.querySelectorAll('.field[data-group^="Покрытие · "][data-label="Цвет"]')].find(f=>f.style.display!=='none');
+        const col=cov?readField(cov):''; if(col) cEl.value=col;
+      }
+    });
   }
   /* ===== условные примечания по данным модулей ===== */
   function moduleFields(label){ return [...document.querySelectorAll(`.module .field[data-label="${label}"]`)]; }
@@ -828,6 +879,30 @@
   }
   function addLayer(btn){ btn.previousElementSibling.insertAdjacentHTML('beforeend', layerRowHTML()); }
 
+  /* ===== наполнитель матов (слои сверху вниз, авто-имена) ===== */
+  function fillerRowHTML(){
+    return `<div class="filler-row">
+      <span class="filler-name"></span>
+      <select class="fl-type"><option value=""></option><option>Поролон</option><option>Изолон</option><option>Холлофайбер</option></select>
+      <input type="text" class="fl-mark" placeholder="марка">
+      <input type="text" class="fl-dens" placeholder="плотность, кг/м³">
+      <input type="text" class="fl-th" placeholder="толщина, мм">
+      <button type="button" class="btn-del" onclick="var L=this.closest('.filler-list');this.closest('.filler-row').remove();relabelFiller(L)">×</button></div>`;
+  }
+  function relabelFiller(list){
+    if(!list) return;
+    const rows=[...list.querySelectorAll('.filler-row')], n=rows.length;
+    rows.forEach((r,i)=>{
+      let name;
+      if(n===1) name='Наполнитель';
+      else if(i===0) name='Верхний';
+      else if(i===n-1) name='Нижний';
+      else name = (n===3) ? 'Средний' : ('Средний '+i);
+      const el=r.querySelector('.filler-name'); if(el) el.textContent=name;
+    });
+  }
+  function addFiller(btn){ const list=btn.previousElementSibling; list.insertAdjacentHTML('beforeend', fillerRowHTML()); relabelFiller(list); }
+
   function applyShowIf(root){
     root.querySelectorAll('.field[data-showif], .block[data-showif]').forEach(el=>{
       let cond; try{ cond=JSON.parse(el.dataset.showif); }catch(e){ return; }
@@ -836,11 +911,21 @@
       const show = conds.every(c=>{
         let v='';
         if(container){ const ctrl=[...container.querySelectorAll('.field')].find(f=>f.dataset.label===c.key); if(ctrl) v=readField(ctrl); }
+        if(c.notIn){ return Array.isArray(v) ? !v.some(x=>c.notIn.includes(x)) : !c.notIn.includes(v); }
         return Array.isArray(v) ? v.some(x=>c.in.includes(x)) : c.in.includes(v);
       });
       el.style.display=show?'':'none';
     });
-    // заголовок группы скрываем, если все его поля скрыты (напр. неактивное покрытие)
+    // динамические поля из библиотеки: скрыть, если в библиотеке для них пусто
+    root.querySelectorAll('.chips[data-dynsource]').forEach(box=>{
+      const fld=box.closest('.field'); if(!fld) return;
+      if(!box.querySelector('.chip')) fld.style.display='none';
+      else if(!fld.hasAttribute('data-showif')) fld.style.display='';
+    });
+    refreshGroupHeads(root);
+  }
+  // заголовок группы скрываем, если все его поля скрыты (напр. неактивное покрытие)
+  function refreshGroupHeads(root){
     root.querySelectorAll('.group-head').forEach(h=>{
       const grid=h.nextElementSibling;
       if(grid && grid.classList.contains('grid')){
@@ -871,6 +956,7 @@
     if(t==='toggle'){ return el.querySelector('.toggle').dataset.val||''; }
     if(t==='info'){ return el.dataset.text||''; }
     if(t==='layers'){ return [...el.querySelectorAll('.layer-item')].map(r=>({'Отделка':r.querySelector('.layer-mat').value.trim(),'Толщина':r.querySelector('.layer-th').value.trim()})).filter(x=>x['Отделка']||x['Толщина']); }
+    if(t==='filler'){ return [...el.querySelectorAll('.filler-row')].map(r=>({'Слой':r.querySelector('.filler-name').textContent,'Тип':r.querySelector('.fl-type').value,'Марка':r.querySelector('.fl-mark').value.trim(),'Плотность':r.querySelector('.fl-dens').value.trim(),'Толщина':r.querySelector('.fl-th').value.trim()})).filter(x=>x['Тип']||x['Марка']||x['Плотность']||x['Толщина']); }
     if(t==='file'){ const k=el.dataset.imgkey; return (imgStore[k]||[]).map(im=>im.name); }
     return '';
   }
@@ -929,10 +1015,12 @@
 
   /* ===== глобальные обработчики ===== */
   document.addEventListener('change', e=>{
-    applyShowIf(document);
+    typicalAdjust();
     refreshDynChips();
+    applyShowIf(document);
     recalcAuto();
     prefillFromHeader();
+    prefillStrips();
     refreshNotes();
     maybePropagate(e.target);
     const fld=e.target.closest && e.target.closest('.field');
@@ -963,11 +1051,14 @@
   SECTIONS.forEach(renderSection);
   initBlocks();
   Object.keys(dlMap).forEach(refreshDatalist);
+  typicalAdjust();
+  refreshDynChips();
   applyShowIf(document);
   refreshModuleLinks();
   recalcAuto();
   prefillFromHeader();
   refreshNotes();
+  document.querySelectorAll('.filler-list').forEach(relabelFiller);
 </script>
 </body>
 </html>
